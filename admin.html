@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - SCooL Shop</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brandPrimary: '#8B5CF6', /* Violet 500 */
+                        brandPrimaryHover: '#7C3AED', /* Violet 600 */
+                        brandAccent: '#EC4899', /* Pink 500 */
+                        bgMain: '#F8FAFC', /* Slate 50 */
+                        textMain: '#0F172A', /* Slate 900 */
+                        sidebarFrom: '#1E1B4B', /* Midnight Blue */
+                        sidebarTo: '#312E81'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,600;0,700;0,800;1,800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Animasi Kustom 3D bergaya Bouncy */
+        .btn-3d { transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1); }
+        .btn-3d:active { transform: translateY(4px) scale(0.98); box-shadow: 0 0px 0 0 transparent !important; }
+
+        /* Efek Logo 3D Melayang */
+        @keyframes float-3d {
+            0% { transform: translateY(0px) scale(1); filter: drop-shadow(0 10px 15px rgba(0,0,0,0.2)); }
+            50% { transform: translateY(-8px) scale(1.05); filter: drop-shadow(0 20px 25px rgba(139,92,246,0.4)); }
+            100% { transform: translateY(0px) scale(1); filter: drop-shadow(0 10px 15px rgba(0,0,0,0.2)); }
+        }
+        .logo-3d { animation: float-3d 4s ease-in-out infinite; will-change: transform, filter; }
+
+        /* Animasi Toast */
+        .toast-enter { animation: slideDown 0.3s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .toast-leave { animation: slideUp 0.3s forwards ease-in; }
+        @keyframes slideDown { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes slideUp { from { transform: translateY(0); opacity: 1; } to { transform: translateY(-100%); opacity: 0; } }
+    </style>
+</head>
+<body class="bg-bgMain text-textMain font-sans h-screen overflow-hidden selection:bg-purple-200">
+
+    <!-- TOAST NOTIFICATION -->
+    <div id="toastContainer" class="fixed top-4 left-0 right-0 z-[1000] flex justify-center pointer-events-none hidden">
+        <div id="toastContent" class="bg-white rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.1)] border border-gray-100 px-5 py-4 flex items-center gap-3 max-w-sm w-[90%] pointer-events-auto transform">
+            <div id="toastIconContainer" class="w-10 h-10 rounded-full flex items-center justify-center shrink-0">
+                <i id="toastIcon" class="fas fa-info-circle text-xl"></i>
+            </div>
+            <div>
+                <h4 id="toastTitle" class="font-bold text-textMain text-sm mb-0.5">Informasi</h4>
+                <p id="toastMessage" class="text-xs text-gray-500 font-medium leading-snug"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- LOGIN SCREEN -->
+    <div id="login-screen" class="fixed inset-0 bg-gradient-to-br from-sidebarFrom to-sidebarTo z-[200] flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8 text-center border border-gray-100">
+            <img src="https://res.cloudinary.com/dmlllfubf/image/upload/v1781765741/LOGO_SCOOL_SHOP_1_pe8czc.png" alt="Admin Logo" class="w-40 h-40 mx-auto mb-4 object-contain logo-3d relative z-10">
+            <h2 class="text-2xl font-black text-textMain tracking-tight mb-1">SCooL Shop Admin</h2>
+            <p class="text-gray-500 text-sm font-semibold mb-8">Silakan masukkan PIN untuk mengelola sistem.</p>
+            
+            <form id="form-login" onsubmit="adminLogin(event)" class="space-y-4">
+                <div class="relative">
+                    <i class="fas fa-lock absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                    <input type="password" id="adminPin" required placeholder="Masukkan 6 Digit PIN" class="w-full pl-12 pr-4 py-3.5 border-2 border-gray-100 rounded-xl outline-none focus:border-brandPrimary text-center tracking-widest font-black text-lg bg-bgMain">
+                </div>
+                <button type="submit" id="btnLogin" class="btn-3d w-full bg-gradient-to-b from-brandAccent to-brandPrimary text-white py-3.5 rounded-xl font-bold text-base shadow-[0_5px_0_0_#7C3AED] hover:from-[#DB2777] hover:to-brandPrimaryHover transition tracking-wider">MASUK KE DASHBOARD</button>
+            </form>
+            <div class="mt-6 text-sm">
+                <button onclick="adminForgotPin()" class="text-brandPrimary font-bold hover:underline">Lupa PIN Admin?</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN DASHBOARD -->
+    <div id="main-dashboard" class="hidden h-screen flex bg-bgMain w-full">
+        
+        <!-- SIDEBAR -->
+        <aside class="w-64 bg-gradient-to-b from-sidebarFrom to-sidebarTo text-white flex flex-col h-full shadow-xl flex-shrink-0 relative z-20">
+            <div class="p-6 flex flex-col items-center border-b border-white/10">
+                <img src="https://res.cloudinary.com/dmlllfubf/image/upload/v1781765741/LOGO_SCOOL_SHOP_1_pe8czc.png" alt="Logo" class="w-28 h-28 object-contain mb-1 logo-3d">
+                <h1 class="text-lg font-black tracking-widest drop-shadow-md text-center mt-2">ADMIN<br>SCOOL SHOP</h1>
+                <div class="flex items-center gap-2 mt-2 bg-black/20 px-3 py-1 rounded-full border border-white/10">
+                    <div class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
+                    <span class="text-[10px] font-bold">Server Online</span>
+                </div>
+            </div>
+
+            <nav class="flex-1 p-4 flex flex-col gap-1 overflow-y-auto hide-scrollbar">
+                <a href="#" onclick="switchTab('dashboard')" id="menu-dashboard" class="menu-item flex items-center bg-white/10 text-white px-4 py-3 rounded-xl transition font-bold shadow-inner">
+                    <i class="fas fa-chart-pie w-6"></i> Ringkasan
+                </a>
+                <a href="#" onclick="switchTab('categories')" id="menu-categories" class="menu-item flex items-center text-white/70 hover:text-white hover:bg-white/10 px-4 py-3 rounded-xl transition font-bold mt-2">
+                    <i class="fas fa-tags w-6"></i> Kategori Produk
+                </a>
+                <a href="#" onclick="switchTab('settings')" id="menu-settings" class="menu-item flex items-center text-white/70 hover:text-white hover:bg-white/10 px-4 py-3 rounded-xl transition font-bold mt-2">
+                    <i class="fas fa-user-cog w-6"></i> Profil & Tarif
+                </a>
+                <a href="#" onclick="switchTab('sellers')" id="menu-sellers" class="menu-item flex items-center text-white/70 hover:text-white hover:bg-white/10 px-4 py-3 rounded-xl transition font-bold mt-2">
+                    <i class="fas fa-store w-6"></i> Mitra Toko
+                </a>
+                <a href="#" onclick="switchTab('drivers')" id="menu-drivers" class="menu-item flex items-center text-white/70 hover:text-white hover:bg-white/10 px-4 py-3 rounded-xl transition font-bold mt-2">
+                    <i class="fas fa-motorcycle w-6"></i> Mitra Kurir
+                </a>
+                <a href="#" onclick="switchTab('buyers')" id="menu-buyers" class="menu-item flex items-center text-white/70 hover:text-white hover:bg-white/10 px-4 py-3 rounded-xl transition font-bold mt-2">
+                    <i class="fas fa-users w-6"></i> Pelanggan
+                </a>
+                
+                <!-- MENU BARU: METODE BAYAR & KIRIM -->
+                <a href="#" onclick="switchTab('payment-delivery')" id="menu-payment-delivery" class="menu-item flex items-center text-white/70 hover:text-white hover:bg-white/10 px-4 py-3 rounded-xl transition font-bold mt-2 border-t border-white/10 pt-4">
+                    <i class="fas fa-wallet w-6"></i> Bayar & Kirim
+                </a>
+            </nav>
+
+            <div class="p-4 border-t border-white/10">
+                <button onclick="adminLogout()" class="btn-3d w-full flex items-center justify-center gap-2 bg-red-500/20 text-red-300 hover:bg-red-500 hover:text-white px-4 py-3 rounded-xl transition font-bold border border-red-500/30">
+                    <i class="fas fa-power-off"></i> Keluar
+                </button>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT AREA -->
+        <main class="flex-1 h-full overflow-y-auto p-4 md:p-8 relative">
+            
+            <div class="flex justify-between items-center mb-6 md:mb-8">
+                <div>
+                    <h2 class="text-2xl font-black text-textMain tracking-tight" id="header-title">Ringkasan Sistem</h2>
+                    <p class="text-sm text-gray-500 font-semibold mt-1">Pantau performa SCooL Shop secara real-time.</p>
+                </div>
+                <div class="text-xs font-bold text-gray-400 bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100 flex items-center gap-2">
+                    <i class="fas fa-sync-alt fa-spin"></i> Auto-Sync <span class="text-green-500">ON</span>
+                </div>
+            </div>
+
+            <!-- SECTION: DASHBOARD / RINGKASAN -->
+            <section id="section-dashboard" class="block animate-fade-in">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 border-l-4 border-l-brandPrimary">
+                        <div class="text-sm text-gray-500 font-bold mb-1"><i class="fas fa-shopping-bag mr-1"></i> Total Pesanan</div>
+                        <div class="text-3xl font-black text-textMain" id="stat-orders">0</div>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 border-l-4 border-l-blue-500">
+                        <div class="text-sm text-gray-500 font-bold mb-1"><i class="fas fa-store mr-1"></i> Mitra Toko</div>
+                        <div class="text-3xl font-black text-textMain" id="stat-sellers">0</div>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 border-l-4 border-l-yellow-500">
+                        <div class="text-sm text-gray-500 font-bold mb-1"><i class="fas fa-motorcycle mr-1"></i> Mitra Kurir</div>
+                        <div class="text-3xl font-black text-textMain" id="stat-drivers">0</div>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 border-l-4 border-l-brandAccent">
+                        <div class="text-sm text-gray-500 font-bold mb-1"><i class="fas fa-users mr-1"></i> Pelanggan Aktif</div>
+                        <div class="text-3xl font-black text-textMain" id="stat-buyers">0</div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                    <h3 class="font-bold text-lg mb-4 text-textMain"><i class="fas fa-history text-gray-400 mr-2"></i> Log Aktivitas Terbaru</h3>
+                    <div class="text-center py-10 text-gray-400 font-semibold" id="recent-logs">Memuat data log...</div>
+                </div>
+            </section>
+
+            <!-- SECTION: KATEGORI PRODUK -->
+            <section id="section-categories" class="hidden animate-fade-in">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-lg text-textMain"><i class="fas fa-tags text-brandPrimary mr-2"></i> Manajemen Kategori</h3>
+                    </div>
+                    <form onsubmit="handleAddCategory(event)" class="flex gap-4 mb-6 bg-bgMain p-4 rounded-xl border border-gray-200">
+                        <input type="text" id="catDisplayName" required placeholder="Nama Tampilan (Misal: Alat Tulis)" class="flex-1 px-4 py-2 border-2 border-gray-100 rounded-xl outline-none focus:border-brandPrimary text-sm font-semibold">
+                        <input type="text" id="catSheetName" required placeholder="ID Database (Misal: alat_tulis)" class="flex-1 px-4 py-2 border-2 border-gray-100 rounded-xl outline-none focus:border-brandPrimary text-sm font-semibold">
+                        <button type="submit" class="btn-3d bg-gray-800 text-white px-6 py-2 rounded-xl font-bold hover:bg-black transition flex items-center gap-2"><i class="fas fa-plus"></i> Tambah</button>
+                    </form>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-gray-50 text-gray-500 text-sm border-b-2 border-gray-200">
+                                    <th class="p-3 font-bold">Nama Kategori</th>
+                                    <th class="p-3 font-bold">ID Database</th>
+                                    <th class="p-3 font-bold">Status</th>
+                                    <th class="p-3 font-bold text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-categories" class="text-sm">
+                                <tr><td colspan="4" class="text-center p-4 text-gray-500">Memuat kategori...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION: PROFIL & TARIF -->
+            <section id="section-settings" class="hidden animate-fade-in">
+                <form id="form-settings" onsubmit="saveSettings(event)" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Tarif Ongkir -->
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                            <h3 class="font-bold text-lg mb-4 text-textMain border-b pb-2"><i class="fas fa-coins text-yellow-500 mr-2"></i> Pengaturan Tarif & Jarak</h3>
+                            
+                            <label class="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Tarif Ongkir per KM (Rp)</label>
+                            <input type="number" id="setOngkir" class="w-full mb-4 px-4 py-3 border-2 border-gray-100 rounded-xl outline-none focus:border-brandPrimary text-sm font-bold bg-bgMain">
+                            
+                            <label class="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Maksimum Ongkir Normal (Rp)</label>
+                            <input type="number" id="setMaxOngkir" class="w-full mb-4 px-4 py-3 border-2 border-gray-100 rounded-xl outline-none focus:border-brandPrimary text-sm font-bold bg-bgMain">
+
+                            <label class="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Maksimum Ongkir Multi-Toko (Rp)</label>
+                            <input type="number" id="setMaxOngkirMulti" class="w-full mb-4 px-4 py-3 border-2 border-gray-100 rounded-xl outline-none focus:border-brandPrimary text-sm font-bold bg-bgMain" placeholder="Jika beli dari 2 toko atau lebih">
+
+                            <label class="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Biaya Layanan Aplikasi (Rp)</label>
+                            <input type="number" id="setLayanan" class="w-full mb-4 px-4 py-3 border-2 border-gray-100 rounded-xl outline-none focus:border-brandPrimary text-sm font-bold bg-bgMain">
+
+                            <label class="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Batas Maksimum Jarak Antar (KM)</label>
+                            <input type="number" id="setMaxDistance" class="w-full px-4 py-3 border-2 border-gray-100 rounded-xl outline-none focus:border-brandPrimary text-sm font-bold bg-bgMain">
+                        </div>
+
+                        <!-- Keamanan Admin -->
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 h-fit">
+                            <h3 class="font-bold text-lg mb-4 text-textMain border-b pb-2"><i class="fas fa-shield-alt text-brandPrimary mr-2"></i> Keamanan Admin</h3>
+                            
+                            <label class="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Email Pemulihan Admin</label>
+                            <input type="email" id="setAdminEmail" class="w-full mb-4 px-4 py-3 border-2 border-gray-100 rounded-xl outline-none focus:border-brandPrimary text-sm font-bold bg-bgMain">
+                            
+                            <label class="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">PIN Login Baru (6 Digit)</label>
+                            <input type="password" id="setAdminPin" maxlength="6" class="w-full mb-4 px-4 py-3 border-2 border-gray-100 rounded-xl outline-none focus:border-brandPrimary text-sm font-bold bg-bgMain tracking-widest text-center">
+                            
+                            <label class="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Konfirmasi PIN</label>
+                            <input type="password" id="confirmAdminPin" maxlength="6" class="w-full px-4 py-3 border-2 border-gray-100 rounded-xl outline-none focus:border-brandPrimary text-sm font-bold bg-bgMain tracking-widest text-center">
+                        </div>
+                    </div>
+                    <button type="submit" id="btnSaveSettings" class="btn-3d bg-gradient-to-r from-brandAccent to-brandPrimary text-white px-8 py-4 rounded-xl font-bold hover:shadow-lg transition w-full md:w-auto flex items-center justify-center gap-2">
+                        <i class="fas fa-save"></i> SIMPAN SEMUA PENGATURAN
+                    </button>
+                </form>
+            </section>
+
+            <!-- SECTION: MITRA TOKO (SELLERS) -->
+            <section id="section-sellers" class="hidden animate-fade-in">
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="p-4 border-b bg-gray-50"><h3 class="font-bold text-lg text-textMain"><i class="fas fa-store text-brandPrimary mr-2"></i> Daftar Mitra Toko</h3></div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-gray-100 text-gray-600"><tr><th class="p-3">ID Toko</th><th class="p-3">Nama Toko</th><th class="p-3">Pemilik</th><th class="p-3">Kontak</th><th class="p-3">Status</th><th class="p-3">Aksi</th></tr></thead>
+                            <tbody id="table-sellers" class="divide-y divide-gray-100">
+                                <tr><td colspan="6" class="text-center p-4">Memuat data...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION: MITRA KURIR (DRIVERS) -->
+            <section id="section-drivers" class="hidden animate-fade-in">
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="p-4 border-b bg-gray-50"><h3 class="font-bold text-lg text-textMain"><i class="fas fa-motorcycle text-brandPrimary mr-2"></i> Daftar Mitra Kurir</h3></div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-gray-100 text-gray-600"><tr><th class="p-3">ID Kurir</th><th class="p-3">Nama Lengkap</th><th class="p-3">Kendaraan</th><th class="p-3">Kontak</th><th class="p-3">Status</th><th class="p-3">Aksi</th></tr></thead>
+                            <tbody id="table-drivers" class="divide-y divide-gray-100">
+                                <tr><td colspan="6" class="text-center p-4">Memuat data...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION: PELANGGAN (BUYERS) -->
+            <section id="section-buyers" class="hidden animate-fade-in">
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="p-4 border-b bg-gray-50"><h3 class="font-bold text-lg text-textMain"><i class="fas fa-users text-brandPrimary mr-2"></i> Daftar Pelanggan</h3></div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-gray-100 text-gray-600"><tr><th class="p-3">ID User</th><th class="p-3">Nama</th><th class="p-3">Kontak</th><th class="p-3">Terakhir Online</th><th class="p-3">Status</th><th class="p-3">Aksi</th></tr></thead>
+                            <tbody id="table-buyers" class="divide-y divide-gray-100">
+                                <tr><td colspan="6" class="text-center p-4">Memuat data...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION BARU: METODE BAYAR & KIRIM -->
+            <section id="section-payment-delivery" class="hidden animate-fade-in">
+                <div class="flex justify-between items-center mb-6 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+                    <div>
+                        <h2 class="text-xl font-black text-textMain"><i class="fas fa-wallet text-brandPrimary mr-2"></i> Metode Bayar & Kirim</h2>
+                        <p class="text-xs text-gray-500 font-medium mt-1">Opsi ini akan otomatis muncul di form Checkout Pembeli.</p>
+                    </div>
+                    <button onclick="savePaymentDeliverySettings()" id="btnSaveMethods" class="btn-3d bg-gradient-to-r from-brandAccent to-brandPrimary text-white px-6 py-3 rounded-xl font-bold shadow-[0_4px_0_0_#7C3AED] hover:from-[#DB2777] hover:to-brandPrimaryHover transition flex items-center gap-2">
+                        <i class="fas fa-save"></i> Simpan Perubahan
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Metode Pembayaran -->
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                        <h3 class="font-bold text-lg mb-4 text-textMain border-b pb-2"><i class="fas fa-money-bill-wave text-green-500 mr-2"></i> Metode Pembayaran</h3>
+                        <div class="flex gap-2 mb-4">
+                            <input type="text" id="newPaymentMethod" placeholder="Contoh: Transfer BCA" class="flex-1 border-2 border-gray-100 rounded-xl px-4 py-2 text-sm focus:border-brandPrimary outline-none bg-bgMain">
+                            <button onclick="addPaymentMethod()" class="btn-3d bg-gray-800 text-white px-4 py-2 rounded-xl font-bold hover:bg-black transition shadow-[0_3px_0_0_#374151]"><i class="fas fa-plus"></i> Tambah</button>
+                        </div>
+                        <div id="payment-methods-list" class="flex flex-col gap-3">
+                            <div class="text-center text-gray-400 text-sm py-4">Memuat...</div>
+                        </div>
+                    </div>
+
+                    <!-- Metode Pengiriman -->
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                        <h3 class="font-bold text-lg mb-4 text-textMain border-b pb-2"><i class="fas fa-motorcycle text-blue-500 mr-2"></i> Metode Pengiriman</h3>
+                        <div class="flex gap-2 mb-4">
+                            <input type="text" id="newDeliveryMethod" placeholder="Contoh: Ambil Sendiri" class="flex-1 border-2 border-gray-100 rounded-xl px-4 py-2 text-sm focus:border-brandPrimary outline-none bg-bgMain">
+                            <button onclick="addDeliveryMethod()" class="btn-3d bg-gray-800 text-white px-4 py-2 rounded-xl font-bold hover:bg-black transition shadow-[0_3px_0_0_#374151]"><i class="fas fa-plus"></i> Tambah</button>
+                        </div>
+                        <div id="delivery-methods-list" class="flex flex-col gap-3">
+                            <div class="text-center text-gray-400 text-sm py-4">Memuat...</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // --- TOAST NOTIFICATION ---
+        let toastTimeout;
+        function showToast(message, type = "info") {
+            const container = document.getElementById('toastContainer');
+            const content = document.getElementById('toastContent');
+            const icon = document.getElementById('toastIcon');
+            const title = document.getElementById('toastTitle');
+            const msgEl = document.getElementById('toastMessage');
+
+            clearTimeout(toastTimeout);
+
+            if (type === 'success') {
+                icon.className = 'fas fa-check-circle text-green-500 text-2xl';
+                title.innerText = 'Berhasil';
+                title.className = 'font-bold text-green-600 text-sm mb-0.5';
+            } else if (type === 'error') {
+                icon.className = 'fas fa-exclamation-circle text-red-500 text-2xl';
+                title.innerText = 'Perhatian';
+                title.className = 'font-bold text-red-600 text-sm mb-0.5';
+            } else {
+                icon.className = 'fas fa-info-circle text-brandPrimary text-2xl';
+                title.innerText = 'Informasi';
+                title.className = 'font-bold text-brandPrimary text-sm mb-0.5';
+            }
+
+            msgEl.innerText = message;
+            container.classList.remove('hidden');
+            content.classList.remove('toast-leave');
+            content.classList.add('toast-enter');
+
+            toastTimeout = setTimeout(() => {
+                content.classList.remove('toast-enter');
+                content.classList.add('toast-leave');
+                setTimeout(() => container.classList.add('hidden'), 300);
+            }, 2500);
+        }
+        window.alert = function(msg) { showToast(msg, "info"); };
+
+        const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxHO1Ll-BNgWPx0vOfpgS6TWwhCIRXNPk73mUn4EuQs1byElTytzZ0PS22V7ZXOWRlI/exec";
+
+        let isLoggedIn = localStorage.getItem('scoolshop_admin_logged_in') === 'true';
+        let syncInterval;
+
+        let globalPaymentMethods = [];
+        let globalDeliveryMethods = [];
+
+        function checkAuth() {
+            if (isLoggedIn) {
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('main-dashboard').classList.remove('hidden');
+                refreshAllData();
+                startBackgroundSync();
+            } else {
+                document.getElementById('login-screen').classList.remove('hidden');
+                document.getElementById('main-dashboard').classList.add('hidden');
+            }
+        }
+
+        async function adminLogin(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btnLogin');
+            const pin = document.getElementById('adminPin').value;
+            
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memverifikasi...';
+            btn.disabled = true;
+
+            try {
+                const response = await fetch(GAS_WEB_APP_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'adminLogin', pin: pin })
+                });
+                const res = await response.json();
+                
+                if (res.status === 'success') {
+                    isLoggedIn = true;
+                    localStorage.setItem('scoolshop_admin_logged_in', 'true');
+                    showToast('Login Berhasil!', 'success');
+                    checkAuth();
+                } else {
+                    showToast(res.message, 'error');
+                }
+            } catch (error) {
+                showToast("Koneksi gagal. Periksa internet Anda.", 'error');
+            } finally {
+                btn.innerHTML = 'MASUK KE DASHBOARD';
+                btn.disabled = false;
+            }
+        }
+
+        function adminLogout() {
+            isLoggedIn = false;
+            localStorage.removeItem('scoolshop_admin_logged_in');
+            if(syncInterval) clearInterval(syncInterval);
+            document.getElementById('adminPin').value = '';
+            checkAuth();
+        }
+
+        async function adminForgotPin() {
+            const email = prompt("Masukkan Email Pemulihan Admin yang terdaftar:");
+            if (!email) return;
+
+            showToast("Memproses permintaan reset PIN...", "info");
+            try {
+                const response = await fetch(GAS_WEB_APP_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'adminForgotPin', email: email })
+                });
+                const res = await response.json();
+                if(res.status === 'success') {
+                    showToast(res.message, 'success');
+                } else {
+                    showToast(res.message, 'error');
+                }
+            } catch(e) {
+                showToast("Gagal terhubung ke server.", 'error');
+            }
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('section').forEach(el => {
+                if(el.id !== 'login-screen') el.classList.add('hidden');
+            });
+            document.getElementById('section-' + tabId).classList.remove('hidden');
+
+            document.querySelectorAll('.menu-item').forEach(el => {
+                el.classList.remove('bg-white/10', 'text-white');
+                el.classList.add('text-white/70');
+            });
+            
+            const activeMenu = document.getElementById('menu-' + tabId);
+            if(activeMenu) {
+                activeMenu.classList.remove('text-white/70');
+                activeMenu.classList.add('bg-white/10', 'text-white');
+            }
+
+            const titles = {
+                'dashboard': 'Ringkasan Sistem',
+                'categories': 'Kategori Produk',
+                'settings': 'Profil & Tarif',
+                'sellers': 'Mitra Toko',
+                'drivers': 'Mitra Kurir',
+                'buyers': 'Pelanggan',
+                'payment-delivery': 'Metode Bayar & Kirim'
+            };
+            document.getElementById('header-title').innerText = titles[tabId] || 'Dashboard';
+        }
+
+        function startBackgroundSync() {
+            if(syncInterval) clearInterval(syncInterval);
+            syncInterval = setInterval(() => refreshAllData(true), 10000);
+        }
+
+        async function refreshAllData(isBackground = false) {
+            if(!isLoggedIn) return;
+            try {
+                const promises = [
+                    fetch(`${GAS_WEB_APP_URL}?action=getData&type=orders`).then(r => r.json()),
+                    fetch(`${GAS_WEB_APP_URL}?action=getData&type=users_sellers`).then(r => r.json()),
+                    fetch(`${GAS_WEB_APP_URL}?action=getData&type=users_drivers`).then(r => r.json()),
+                    fetch(`${GAS_WEB_APP_URL}?action=getData&type=users_buyers`).then(r => r.json()),
+                    fetch(`${GAS_WEB_APP_URL}?action=getData&type=app_categories`).then(r => r.json()),
+                    fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'getAdminSettings' }) }).then(r => r.json())
+                ];
+
+                const [resOrders, resSellers, resDrivers, resBuyers, resCats, resSettings] = await Promise.all(promises);
+
+                // --- DASHBOARD STATS ---
+                if (resOrders.status === 'success' && resOrders.data) {
+                    document.getElementById('stat-orders').innerText = resOrders.data.length;
+                    
+                    let logHtml = '';
+                    const recent = resOrders.data.slice().reverse().slice(0, 5);
+                    if(recent.length > 0) {
+                        recent.forEach(o => {
+                            logHtml += `<div class="flex justify-between items-center border-b py-3 text-sm text-left">
+                                <div><span class="font-bold text-textMain">${o.order_id}</span> - <span class="text-brandPrimary">${o.outlet}</span><br><span class="text-xs text-gray-500">${o.product_name}</span></div>
+                                <div class="text-xs font-bold px-2 py-1 bg-gray-100 rounded-lg text-gray-600">${o.status}</div>
+                            </div>`;
+                        });
+                        document.getElementById('recent-logs').innerHTML = logHtml;
+                    } else {
+                        document.getElementById('recent-logs').innerHTML = "Belum ada log pesanan.";
+                    }
+                }
+
+                if (resSellers.status === 'success' && resSellers.data) {
+                    document.getElementById('stat-sellers').innerText = resSellers.data.length;
+                    let html = '';
+                    resSellers.data.forEach(s => {
+                        html += `<tr class="hover:bg-gray-50">
+                            <td class="p-3 font-bold">${s.seller_id}</td>
+                            <td class="p-3 text-brandPrimary font-bold">${s.store_name}</td>
+                            <td class="p-3">${s.owner_name}</td>
+                            <td class="p-3">${s.phone}</td>
+                            <td class="p-3"><span class="px-2 py-1 text-xs rounded-full font-bold ${s.status==='Suspend'?'bg-red-100 text-red-600':'bg-green-100 text-green-600'}">${s.status||'Aktif'}</span></td>
+                            <td class="p-3">
+                                ${s.status === 'Suspend' ? 
+                                `<button onclick="updateAccountStatus('users_sellers', '${s.seller_id}', 'Aktif')" class="text-xs bg-green-500 text-white px-3 py-1 rounded font-bold hover:bg-green-600">Aktifkan</button>` :
+                                `<button onclick="updateAccountStatus('users_sellers', '${s.seller_id}', 'Suspend')" class="text-xs bg-red-500 text-white px-3 py-1 rounded font-bold hover:bg-red-600">Suspend</button>`}
+                            </td>
+                        </tr>`;
+                    });
+                    document.getElementById('table-sellers').innerHTML = html || '<tr><td colspan="6" class="text-center p-4">Kosong</td></tr>';
+                }
+
+                if (resDrivers.status === 'success' && resDrivers.data) {
+                    document.getElementById('stat-drivers').innerText = resDrivers.data.length;
+                    let html = '';
+                    resDrivers.data.forEach(d => {
+                        html += `<tr class="hover:bg-gray-50">
+                            <td class="p-3 font-bold">${d.driver_id}</td>
+                            <td class="p-3">${d.full_name}</td>
+                            <td class="p-3">${d.vehicle_type} (${d.plate_number})</td>
+                            <td class="p-3">${d.phone}</td>
+                            <td class="p-3"><span class="px-2 py-1 text-xs rounded-full font-bold ${d.status==='Suspend'?'bg-red-100 text-red-600':'bg-green-100 text-green-600'}">${d.status||'Aktif'}</span></td>
+                            <td class="p-3">
+                                ${d.status === 'Suspend' ? 
+                                `<button onclick="updateAccountStatus('users_drivers', '${d.driver_id}', 'Aktif')" class="text-xs bg-green-500 text-white px-3 py-1 rounded font-bold hover:bg-green-600">Aktifkan</button>` :
+                                `<button onclick="updateAccountStatus('users_drivers', '${d.driver_id}', 'Suspend')" class="text-xs bg-red-500 text-white px-3 py-1 rounded font-bold hover:bg-red-600">Suspend</button>`}
+                            </td>
+                        </tr>`;
+                    });
+                    document.getElementById('table-drivers').innerHTML = html || '<tr><td colspan="6" class="text-center p-4">Kosong</td></tr>';
+                }
+
+                if (resBuyers.status === 'success' && resBuyers.data) {
+                    document.getElementById('stat-buyers').innerText = resBuyers.data.length;
+                    let html = '';
+                    resBuyers.data.forEach(b => {
+                        html += `<tr class="hover:bg-gray-50">
+                            <td class="p-3 font-bold">${b.user_id}</td>
+                            <td class="p-3">${b.username}</td>
+                            <td class="p-3">${b.phone}</td>
+                            <td class="p-3 text-xs text-gray-500">${b.last_online || '-'}</td>
+                            <td class="p-3"><span class="px-2 py-1 text-xs rounded-full font-bold ${b.status==='Suspend'?'bg-red-100 text-red-600':'bg-blue-100 text-blue-600'}">${b.status||'Offline'}</span></td>
+                            <td class="p-3">
+                                ${b.status === 'Suspend' ? 
+                                `<button onclick="updateAccountStatus('users_buyers', '${b.user_id}', 'Aktif')" class="text-xs bg-green-500 text-white px-3 py-1 rounded font-bold hover:bg-green-600">Aktifkan</button>` :
+                                `<button onclick="updateAccountStatus('users_buyers', '${b.user_id}', 'Suspend')" class="text-xs bg-red-500 text-white px-3 py-1 rounded font-bold hover:bg-red-600">Suspend</button>`}
+                            </td>
+                        </tr>`;
+                    });
+                    document.getElementById('table-buyers').innerHTML = html || '<tr><td colspan="6" class="text-center p-4">Kosong</td></tr>';
+                }
+
+                if (resCats.status === 'success' && resCats.data) {
+                    let html = '';
+                    resCats.data.forEach(c => {
+                        const isFlash = c.sheetName === 'flash_promo';
+                        html += `<tr class="hover:bg-gray-50 border-b border-gray-100">
+                            <td class="p-3 font-extrabold ${isFlash?'text-yellow-500':''}">${c.displayName}</td>
+                            <td class="p-3 text-gray-500 text-xs">${c.sheetName}</td>
+                            <td class="p-3"><span class="px-2 py-1 text-[10px] rounded border font-bold ${c.status==='Nonaktif'?'bg-red-50 text-red-500 border-red-200':'bg-green-50 text-green-600 border-green-200'}">${c.status}</span></td>
+                            <td class="p-3 text-center flex justify-center gap-2">
+                                <button onclick="toggleCategoryStatus('${c.sheetName}')" class="text-xs px-3 py-1 rounded font-bold bg-white border border-gray-300 shadow-sm text-gray-600 hover:text-brandPrimary">${c.status==='Nonaktif'?'Aktifkan':'Nonaktifkan'}</button>
+                                ${!isFlash ? `<button onclick="deleteCategory('${c.sheetName}')" class="text-xs px-3 py-1 rounded font-bold bg-red-50 border border-red-100 text-red-500 hover:bg-red-100"><i class="fas fa-trash"></i></button>` : ''}
+                            </td>
+                        </tr>`;
+                    });
+                    document.getElementById('table-categories').innerHTML = html || '<tr><td colspan="4" class="text-center p-4">Kosong</td></tr>';
+                }
+
+                // --- PENGATURAN (SETTINGS) & BAYAR KIRIM ---
+                if (resSettings.status === 'success' && resSettings.data) {
+                    const set = resSettings.data;
+                    
+                    // PERBAIKAN AUTO-SYNC: Hanya load saat BUKAN background sync agar ketikan Admin tidak tertimpa
+                    if(!isBackground) {
+                        document.getElementById('setOngkir').value = set.fee_ongkir || 2000;
+                        document.getElementById('setMaxOngkir').value = set.max_ongkir || 50000;
+                        document.getElementById('setMaxOngkirMulti').value = set.max_ongkir_multi || 75000;
+                        document.getElementById('setLayanan').value = set.fee_layanan || 1000;
+                        document.getElementById('setMaxDistance').value = set.max_distance || 15;
+                        document.getElementById('setAdminEmail').value = set.admin_email || '';
+                        document.getElementById('setAdminPin').value = set.admin_pin || '';
+                        document.getElementById('confirmAdminPin').value = set.admin_pin || '';
+
+                        // Parsing Metode Bayar & Kirim
+                        if(set.payment_methods) {
+                            try { globalPaymentMethods = JSON.parse(set.payment_methods); } catch(e) { globalPaymentMethods = []; }
+                        } else {
+                            globalPaymentMethods = [{id: 1, name: "Cash on Delivery (Tunai)", status: "Aktif"}];
+                        }
+
+                        if(set.delivery_methods) {
+                            try { globalDeliveryMethods = JSON.parse(set.delivery_methods); } catch(e) { globalDeliveryMethods = []; }
+                        } else {
+                            globalDeliveryMethods = [{id: 1, name: "Kirim via Kurir", status: "Aktif"}, {id: 2, name: "Ambil Sendiri (Takeaway)", status: "Aktif"}];
+                        }
+                        
+                        renderPaymentMethods();
+                        renderDeliveryMethods();
+                    }
+                }
+
+            } catch (e) {
+                console.log("Sync Error", e);
+            }
+        }
+
+        // =====================================
+        // LOGIKA METODE BAYAR & KIRIM
+        // =====================================
+        function renderPaymentMethods() {
+            const container = document.getElementById('payment-methods-list');
+            container.innerHTML = '';
+            if(globalPaymentMethods.length === 0) {
+                container.innerHTML = '<div class="text-center text-gray-400 text-sm py-4">Belum ada metode pembayaran.</div>';
+                return;
+            }
+            globalPaymentMethods.forEach((m, idx) => {
+                const isActive = m.status === 'Aktif';
+                const bg = isActive ? 'bg-green-50 border-green-100' : 'bg-gray-50 border-gray-200';
+                const textColor = isActive ? 'text-green-700' : 'text-gray-500';
+                container.innerHTML += `
+                    <div class="flex justify-between items-center p-3 border rounded-xl ${bg}">
+                        <span class="font-bold text-sm ${textColor}">${m.name}</span>
+                        <div class="flex gap-2">
+                            <button onclick="togglePayment(${idx})" class="text-xs px-3 py-1 rounded-lg font-bold border shadow-sm ${isActive ? 'bg-white text-green-600 border-green-200' : 'bg-white text-gray-500 border-gray-300'}">${isActive ? 'Aktif' : 'Nonaktif'}</button>
+                            <button onclick="deletePayment(${idx})" class="text-red-500 hover:bg-red-100 w-7 h-7 flex items-center justify-center rounded border border-red-100 bg-white"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function renderDeliveryMethods() {
+            const container = document.getElementById('delivery-methods-list');
+            container.innerHTML = '';
+            if(globalDeliveryMethods.length === 0) {
+                container.innerHTML = '<div class="text-center text-gray-400 text-sm py-4">Belum ada metode pengiriman.</div>';
+                return;
+            }
+            globalDeliveryMethods.forEach((m, idx) => {
+                const isActive = m.status === 'Aktif';
+                const bg = isActive ? 'bg-blue-50 border-blue-100' : 'bg-gray-50 border-gray-200';
+                const textColor = isActive ? 'text-blue-700' : 'text-gray-500';
+                container.innerHTML += `
+                    <div class="flex justify-between items-center p-3 border rounded-xl ${bg}">
+                        <span class="font-bold text-sm ${textColor}">${m.name}</span>
+                        <div class="flex gap-2">
+                            <button onclick="toggleDelivery(${idx})" class="text-xs px-3 py-1 rounded-lg font-bold border shadow-sm ${isActive ? 'bg-white text-blue-600 border-blue-200' : 'bg-white text-gray-500 border-gray-300'}">${isActive ? 'Aktif' : 'Nonaktif'}</button>
+                            <button onclick="deleteDelivery(${idx})" class="text-red-500 hover:bg-red-100 w-7 h-7 flex items-center justify-center rounded border border-red-100 bg-white"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function addPaymentMethod() {
+            const val = document.getElementById('newPaymentMethod').value.trim();
+            if(!val) return;
+            globalPaymentMethods.push({ id: Date.now(), name: val, status: 'Aktif' });
+            document.getElementById('newPaymentMethod').value = '';
+            renderPaymentMethods();
+        }
+
+        function addDeliveryMethod() {
+            const val = document.getElementById('newDeliveryMethod').value.trim();
+            if(!val) return;
+            globalDeliveryMethods.push({ id: Date.now(), name: val, status: 'Aktif' });
+            document.getElementById('newDeliveryMethod').value = '';
+            renderDeliveryMethods();
+        }
+
+        function togglePayment(idx) {
+            globalPaymentMethods[idx].status = globalPaymentMethods[idx].status === 'Aktif' ? 'Nonaktif' : 'Aktif';
+            renderPaymentMethods();
+        }
+
+        function toggleDelivery(idx) {
+            globalDeliveryMethods[idx].status = globalDeliveryMethods[idx].status === 'Aktif' ? 'Nonaktif' : 'Aktif';
+            renderDeliveryMethods();
+        }
+
+        function deletePayment(idx) {
+            globalPaymentMethods.splice(idx, 1);
+            renderPaymentMethods();
+        }
+
+        function deleteDelivery(idx) {
+            globalDeliveryMethods.splice(idx, 1);
+            renderDeliveryMethods();
+        }
+
+        async function savePaymentDeliverySettings() {
+            const btn = document.getElementById('btnSaveMethods');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
+            btn.disabled = true;
+
+            const payload = {
+                action: 'saveAdminSettings',
+                settings: {
+                    fee_ongkir: document.getElementById('setOngkir').value || 2000,
+                    max_ongkir: document.getElementById('setMaxOngkir').value || 50000,
+                    max_ongkir_multi: document.getElementById('setMaxOngkirMulti').value || 75000,
+                    fee_layanan: document.getElementById('setLayanan').value || 1000,
+                    max_distance: document.getElementById('setMaxDistance').value || 15,
+                    admin_email: document.getElementById('setAdminEmail').value || '',
+                    admin_pin: document.getElementById('setAdminPin').value || '',
+                    payment_methods: JSON.stringify(globalPaymentMethods),
+                    delivery_methods: JSON.stringify(globalDeliveryMethods)
+                }
+            };
+
+            try {
+                const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) });
+                const data = await res.json();
+                if(data.status === 'success') showToast('Pengaturan Bayar & Kirim berhasil disimpan!', 'success');
+                else showToast('Gagal: ' + data.message, 'error');
+            } catch(e) {
+                showToast('Koneksi gagal. Periksa internet Anda.', 'error');
+            } finally {
+                btn.innerHTML = '<i class="fas fa-save"></i> Simpan Perubahan';
+                btn.disabled = false;
+            }
+        }
+
+        // =====================================
+        // FUNGSI UMUM ADMIN LAINNYA
+        // =====================================
+        async function saveSettings(e) {
+            e.preventDefault();
+            const pin1 = document.getElementById('setAdminPin').value;
+            const pin2 = document.getElementById('confirmAdminPin').value;
+            if (pin1 !== pin2) return showToast("Konfirmasi PIN tidak cocok!", "error");
+
+            const btn = document.getElementById('btnSaveSettings');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> MENYIMPAN...';
+            btn.disabled = true;
+
+            const payload = {
+                action: 'saveAdminSettings',
+                settings: {
+                    fee_ongkir: document.getElementById('setOngkir').value,
+                    max_ongkir: document.getElementById('setMaxOngkir').value,
+                    max_ongkir_multi: document.getElementById('setMaxOngkirMulti').value,
+                    fee_layanan: document.getElementById('setLayanan').value,
+                    max_distance: document.getElementById('setMaxDistance').value,
+                    admin_email: document.getElementById('setAdminEmail').value,
+                    admin_pin: pin1,
+                    payment_methods: JSON.stringify(globalPaymentMethods),
+                    delivery_methods: JSON.stringify(globalDeliveryMethods)
+                }
+            };
+
+            try {
+                const response = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) });
+                const res = await response.json();
+                if(res.status === 'success') {
+                    showToast('Semua Pengaturan Disimpan!', 'success');
+                } else {
+                    showToast('Gagal menyimpan.', 'error');
+                }
+            } catch (e) {
+                showToast('Koneksi terputus.', 'error');
+            } finally {
+                btn.innerHTML = '<i class="fas fa-save"></i> SIMPAN SEMUA PENGATURAN';
+                btn.disabled = false;
+            }
+        }
+
+        async function updateAccountStatus(type, id, newStatus) {
+            showToast(`Mengubah status...`, "info");
+            try {
+                const response = await fetch(GAS_WEB_APP_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'updateAccountStatus', userType: type, userId: id, newStatus: newStatus })
+                });
+                const res = await response.json();
+                if(res.status === 'success') {
+                    showToast(`Akun berhasil di-${newStatus.toLowerCase()}!`, "success");
+                    refreshAllData(true);
+                } else {
+                    showToast(res.message, "error");
+                }
+            } catch(e) {
+                showToast('Gagal terhubung ke server.', "error");
+            }
+        }
+
+        async function handleAddCategory(e) {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            const dName = document.getElementById('catDisplayName').value;
+            const sName = document.getElementById('catSheetName').value.replace(/\s+/g, '_').toLowerCase();
+            
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            btn.disabled = true;
+
+            try {
+                const response = await fetch(GAS_WEB_APP_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'addCategory', displayName: dName, sheetName: sName })
+                });
+                const res = await response.json();
+                if(res.status === 'success') {
+                    showToast('Kategori baru ditambahkan!', 'success');
+                    document.getElementById('catDisplayName').value = '';
+                    document.getElementById('catSheetName').value = '';
+                    refreshAllData(true);
+                } else {
+                    showToast(res.message, 'error');
+                }
+            } catch(error) {
+                showToast('Gagal terhubung.', 'error');
+            } finally {
+                btn.innerHTML = '<i class="fas fa-plus"></i> Tambah';
+                btn.disabled = false;
+            }
+        }
+
+        async function toggleCategoryStatus(sheetName) {
+            try {
+                const response = await fetch(GAS_WEB_APP_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'toggleCategoryStatus', sheetName: sheetName })
+                });
+                const res = await response.json();
+                if(res.status === 'success') {
+                    showToast(`Kategori ${sheetName} sekarang ${res.newStatus}`, 'success');
+                    refreshAllData(true);
+                } else {
+                    showToast(res.message, 'error');
+                }
+            } catch(e) {
+                showToast('Gagal terhubung.', 'error');
+            }
+        }
+
+        async function deleteCategory(sheetName) {
+            showToast('Menghapus kategori...', 'info');
+            try {
+                const response = await fetch(GAS_WEB_APP_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'deleteCategory', sheetName: sheetName })
+                });
+                const res = await response.json();
+                if(res.status === 'success') {
+                    showToast('Kategori dihapus permanen!', 'success');
+                    refreshAllData(true);
+                }
+            } catch(e) {
+                showToast('Gagal terhubung.', 'error');
+            }
+        }
+
+        window.onload = checkAuth;
+    </script>
+</body>
+</html>
