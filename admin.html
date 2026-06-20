@@ -9,6 +9,10 @@
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
+    <!-- Firebase SDK (Untuk Google Login & Firestore) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
     <script>
         tailwind.config = {
             theme: {
@@ -91,7 +95,7 @@
     <div id="main-dashboard" class="hidden h-screen flex bg-bgMain w-full">
         
         <!-- SIDEBAR -->
-        <aside class="w-64 bg-gradient-to-b from-sidebarFrom to-sidebarTo text-white flex flex-col h-full shadow-xl flex-shrink-0 relative z-20">
+        <aside class="w-64 bg-gradient-to-b from-sidebarFrom to-sidebarTo text-white flex flex-col h-full shadow-xl flex-shrink-0 relative z-20 hidden md:flex">
             <div class="p-6 flex flex-col items-center border-b border-white/10">
                 <img src="https://res.cloudinary.com/dmlllfubf/image/upload/v1781765741/LOGO_SCOOL_SHOP_1_pe8czc.png" alt="Logo" class="w-28 h-28 object-contain mb-1 logo-3d">
                 <h1 class="text-lg font-black tracking-widest drop-shadow-md text-center mt-2">ADMIN<br>SCOOL SHOP</h1>
@@ -121,7 +125,6 @@
                     <i class="fas fa-users w-6"></i> Pelanggan
                 </a>
                 
-                <!-- MENU BARU: METODE BAYAR & KIRIM -->
                 <a href="#" onclick="switchTab('payment-delivery')" id="menu-payment-delivery" class="menu-item flex items-center text-white/70 hover:text-white hover:bg-white/10 px-4 py-3 rounded-xl transition font-bold mt-2 border-t border-white/10 pt-4">
                     <i class="fas fa-wallet w-6"></i> Bayar & Kirim
                 </a>
@@ -135,208 +138,289 @@
         </aside>
 
         <!-- MAIN CONTENT AREA -->
-        <main class="flex-1 h-full overflow-y-auto p-4 md:p-8 relative">
+        <main class="flex-1 h-full flex flex-col relative w-full overflow-hidden">
             
-            <div class="flex justify-between items-center mb-6 md:mb-8">
+            <!-- HEADER BARS DENGAN IKON CHAT -->
+            <div class="p-4 md:p-8 flex justify-between items-center bg-white shadow-sm border-b shrink-0 z-30">
                 <div>
-                    <h2 class="text-2xl font-black text-textMain tracking-tight" id="header-title">Ringkasan Sistem</h2>
-                    <p class="text-sm text-gray-500 font-semibold mt-1">Pantau performa SCooL Shop secara real-time.</p>
+                    <h2 class="text-xl md:text-2xl font-black text-textMain tracking-tight" id="header-title">Ringkasan Sistem</h2>
+                    <p class="text-xs md:text-sm text-gray-500 font-semibold mt-1">Pantau performa SCooL Shop secara real-time.</p>
                 </div>
-                <div class="text-xs font-bold text-gray-400 bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100 flex items-center gap-2">
-                    <i class="fas fa-sync-alt fa-spin"></i> Auto-Sync <span class="text-green-500">ON</span>
+                
+                <div class="flex items-center gap-3 md:gap-4">
+                    <!-- TOMBOL CHAT CUSTOMER SERVICE DI HEADER -->
+                    <button onclick="switchTab('chat')" class="btn-3d relative w-10 h-10 md:w-12 md:h-12 rounded-full bg-blue-50 border border-blue-200 text-brandPrimary hover:bg-brandPrimary hover:text-white transition flex items-center justify-center shadow-sm" title="Buka Pesan Pelanggan">
+                        <i class="fas fa-headset text-lg md:text-xl"></i>
+                        <span id="admin-chat-badge" class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-sm animate-pulse border-2 border-white">!</span>
+                    </button>
+                    
+                    <!-- Indikator Auto-Sync -->
+                    <div class="hidden md:flex text-xs font-bold text-gray-400 bg-gray-50 px-4 py-2.5 rounded-xl shadow-sm border border-gray-200 items-center gap-2">
+                        <i class="fas fa-sync-alt fa-spin"></i> Auto-Sync <span class="text-green-500">ON</span>
+                    </div>
+                    
+                    <!-- Menu Toggle untuk HP -->
+                    <button class="md:hidden text-gray-500 text-2xl px-2" onclick="document.querySelector('aside').classList.toggle('hidden'); document.querySelector('aside').classList.toggle('absolute'); document.querySelector('aside').classList.toggle('inset-y-0'); document.querySelector('aside').classList.toggle('left-0');">
+                        <i class="fas fa-bars"></i>
+                    </button>
                 </div>
             </div>
 
-            <!-- SECTION: DASHBOARD / RINGKASAN -->
-            <section id="section-dashboard" class="block animate-fade-in">
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 border-l-4 border-l-brandPrimary">
-                        <div class="text-sm text-gray-500 font-bold mb-1"><i class="fas fa-shopping-bag mr-1"></i> Total Pesanan</div>
-                        <div class="text-3xl font-black text-textMain" id="stat-orders">0</div>
+            <div class="flex-1 overflow-y-auto p-4 md:p-8 relative">
+                <!-- SECTION: DASHBOARD / RINGKASAN -->
+                <section id="section-dashboard" class="block animate-fade-in">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 border-l-4 border-l-brandPrimary">
+                            <div class="text-sm text-gray-500 font-bold mb-1"><i class="fas fa-shopping-bag mr-1"></i> Total Pesanan</div>
+                            <div class="text-3xl font-black text-textMain" id="stat-orders">0</div>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 border-l-4 border-l-blue-500">
+                            <div class="text-sm text-gray-500 font-bold mb-1"><i class="fas fa-store mr-1"></i> Mitra Toko</div>
+                            <div class="text-3xl font-black text-textMain" id="stat-sellers">0</div>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 border-l-4 border-l-yellow-500">
+                            <div class="text-sm text-gray-500 font-bold mb-1"><i class="fas fa-motorcycle mr-1"></i> Mitra Kurir</div>
+                            <div class="text-3xl font-black text-textMain" id="stat-drivers">0</div>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 border-l-4 border-l-brandAccent">
+                            <div class="text-sm text-gray-500 font-bold mb-1"><i class="fas fa-users mr-1"></i> Pelanggan Aktif</div>
+                            <div class="text-3xl font-black text-textMain" id="stat-buyers">0</div>
+                        </div>
                     </div>
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 border-l-4 border-l-blue-500">
-                        <div class="text-sm text-gray-500 font-bold mb-1"><i class="fas fa-store mr-1"></i> Mitra Toko</div>
-                        <div class="text-3xl font-black text-textMain" id="stat-sellers">0</div>
-                    </div>
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 border-l-4 border-l-yellow-500">
-                        <div class="text-sm text-gray-500 font-bold mb-1"><i class="fas fa-motorcycle mr-1"></i> Mitra Kurir</div>
-                        <div class="text-3xl font-black text-textMain" id="stat-drivers">0</div>
-                    </div>
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 border-l-4 border-l-brandAccent">
-                        <div class="text-sm text-gray-500 font-bold mb-1"><i class="fas fa-users mr-1"></i> Pelanggan Aktif</div>
-                        <div class="text-3xl font-black text-textMain" id="stat-buyers">0</div>
-                    </div>
-                </div>
 
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                    <h3 class="font-bold text-lg mb-4 text-textMain"><i class="fas fa-history text-gray-400 mr-2"></i> Log Aktivitas Terbaru</h3>
-                    <div class="text-center py-10 text-gray-400 font-semibold" id="recent-logs">Memuat data log...</div>
-                </div>
-            </section>
-
-            <!-- SECTION: KATEGORI PRODUK -->
-            <section id="section-categories" class="hidden animate-fade-in">
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-6">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="font-bold text-lg text-textMain"><i class="fas fa-tags text-brandPrimary mr-2"></i> Manajemen Kategori</h3>
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                        <h3 class="font-bold text-lg mb-4 text-textMain"><i class="fas fa-history text-gray-400 mr-2"></i> Log Aktivitas Terbaru</h3>
+                        <div class="text-center py-10 text-gray-400 font-semibold" id="recent-logs">Memuat data log...</div>
                     </div>
-                    <form onsubmit="handleAddCategory(event)" class="flex gap-4 mb-6 bg-bgMain p-4 rounded-xl border border-gray-200">
-                        <input type="text" id="catDisplayName" required placeholder="Nama Tampilan (Misal: Alat Tulis)" class="flex-1 px-4 py-2 border-2 border-gray-100 rounded-xl outline-none focus:border-brandPrimary text-sm font-semibold">
-                        <input type="text" id="catSheetName" required placeholder="ID Database (Misal: alat_tulis)" class="flex-1 px-4 py-2 border-2 border-gray-100 rounded-xl outline-none focus:border-brandPrimary text-sm font-semibold">
-                        <button type="submit" class="btn-3d bg-gray-800 text-white px-6 py-2 rounded-xl font-bold hover:bg-black transition flex items-center gap-2"><i class="fas fa-plus"></i> Tambah</button>
+                </section>
+
+                <!-- SECTION: CHAT CUSTOMER SERVICE -->
+                <section id="section-chat" class="hidden animate-fade-in h-[calc(100vh-160px)] flex-col">
+                    <div class="flex flex-col md:flex-row gap-4 h-full">
+                        <!-- KIRI: Daftar Chat Masuk -->
+                        <div class="w-full md:w-1/3 bg-white rounded-2xl shadow-sm border-2 border-gray-100 flex flex-col overflow-hidden h-full">
+                            <div class="bg-gray-50 p-4 border-b-2 border-gray-100 font-bold text-gray-700 flex justify-between items-center shrink-0">
+                                Pesan Masuk <span class="bg-brandPrimary text-white text-[10px] px-2 py-1 rounded-full" id="cs-total-chat">0</span>
+                            </div>
+                            <div class="overflow-y-auto flex-1 p-3" id="admin-chat-list">
+                                <div class="text-center py-10 text-gray-500 font-bold"><i class="fas fa-spinner fa-spin text-2xl mb-2"></i><br>Memuat pesan...</div>
+                            </div>
+                        </div>
+
+                        <!-- KANAN: Ruang Chat Aktual -->
+                        <div class="w-full md:w-2/3 bg-white rounded-2xl shadow-sm border-2 border-gray-100 flex flex-col hidden overflow-hidden h-full" id="admin-chat-room">
+                            <!-- Header Chat Room -->
+                            <div class="p-4 border-b-2 border-gray-100 bg-white font-bold flex items-center gap-3 shrink-0 shadow-sm z-10">
+                                <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-lg">
+                                    <i id="admin-chat-room-icon" class="fas fa-user"></i>
+                                </div>
+                                <div class="flex flex-col">
+                                    <span id="admin-chat-buyer-name" class="text-gray-800 text-lg">Pilih Pesan...</span>
+                                    <span class="text-[10px] text-green-500"><i class="fas fa-circle text-[8px] mr-1"></i>Pelanggan / Mitra Terhubung</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Area Pesan (Balon Chat) -->
+                            <div id="admin-chat-messages" class="flex-1 p-4 overflow-y-auto bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-gray-50/50 flex flex-col gap-3">
+                                <!-- Pesan akan muncul di sini -->
+                            </div>
+                            
+                            <!-- Input Form Balas Pesan -->
+                            <form onsubmit="sendAdminMessage(event)" class="p-4 bg-white border-t-2 border-gray-100 flex gap-2 shrink-0 items-center z-10">
+                                <input type="text" id="adminChatInput" autocomplete="off" placeholder="Ketik balasan untuk pelanggan/mitra..." class="flex-1 border-2 border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-brandPrimary text-sm font-semibold bg-gray-50 transition-colors">
+                                <button type="submit" class="btn-3d bg-brandPrimary hover:bg-brandPrimaryHover transition-colors text-white w-12 h-12 md:w-auto md:px-6 md:py-3 rounded-xl font-bold shadow-[0_4px_0_0_#7C3AED] flex items-center justify-center gap-2">
+                                    <i class="fas fa-paper-plane"></i> <span class="hidden md:inline">Kirim</span>
+                                </button>
+                            </form>
+                        </div>
+                        
+                        <!-- Layar Kosong (Saat belum ada chat dipilih) -->
+                        <div class="w-full md:w-2/3 bg-white rounded-2xl shadow-sm border-2 border-gray-100 flex flex-col items-center justify-center text-gray-400 h-full" id="admin-chat-empty">
+                            <i class="fas fa-comments text-6xl mb-4 opacity-20"></i>
+                            <h3 class="font-bold text-lg">Belum Ada Pesan yang Dipilih</h3>
+                            <p class="text-sm">Klik salah satu pesan di sebelah kiri untuk mulai membalas.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- SECTION: KATEGORI PRODUK -->
+                <section id="section-categories" class="hidden animate-fade-in">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-lg text-textMain"><i class="fas fa-tags text-brandPrimary mr-2"></i> Manajemen Kategori</h3>
+                        </div>
+                        <form onsubmit="handleAddCategory(event)" class="flex gap-4 mb-6 bg-bgMain p-4 rounded-xl border border-gray-200 flex-wrap md:flex-nowrap">
+                            <input type="text" id="catDisplayName" required placeholder="Nama Tampilan (Misal: Alat Tulis)" class="w-full md:flex-1 px-4 py-2 border-2 border-gray-100 rounded-xl outline-none focus:border-brandPrimary text-sm font-semibold">
+                            <input type="text" id="catSheetName" required placeholder="ID Database (Misal: alat_tulis)" class="w-full md:flex-1 px-4 py-2 border-2 border-gray-100 rounded-xl outline-none focus:border-brandPrimary text-sm font-semibold">
+                            <button type="submit" class="btn-3d w-full md:w-auto bg-gray-800 text-white px-6 py-2 rounded-xl font-bold hover:bg-black transition flex items-center justify-center gap-2"><i class="fas fa-plus"></i> Tambah</button>
+                        </form>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-gray-50 text-gray-500 text-sm border-b-2 border-gray-200">
+                                        <th class="p-3 font-bold">Nama Kategori</th>
+                                        <th class="p-3 font-bold">ID Database</th>
+                                        <th class="p-3 font-bold">Status</th>
+                                        <th class="p-3 font-bold text-center">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-categories" class="text-sm">
+                                    <tr><td colspan="4" class="text-center p-4 text-gray-500">Memuat kategori...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- SECTION: PROFIL & TARIF -->
+                <section id="section-settings" class="hidden animate-fade-in">
+                    <form id="form-settings" onsubmit="saveSettings(event)" class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Tarif Ongkir -->
+                            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                                <h3 class="font-bold text-lg mb-4 text-textMain border-b pb-2"><i class="fas fa-coins text-yellow-500 mr-2"></i> Pengaturan Tarif & Jarak</h3>
+                                
+                                <label class="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Tarif Ongkir per KM (Rp)</label>
+                                <input type="number" id="setOngkir" class="w-full mb-4 px-4 py-3 border-2 border-gray-100 rounded-xl outline-none focus:border-brandPrimary text-sm font-bold bg-bgMain">
+                                
+                                <label class="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Maksimum Ongkir Normal (Rp)</label>
+                                <input type="number" id="setMaxOngkir" class="w-full mb-4 px-4 py-3 border-2 border-gray-100 rounded-xl outline-none focus:border-brandPrimary text-sm font-bold bg-bgMain">
+
+                                <label class="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Maksimum Ongkir Multi-Toko (Rp)</label>
+                                <input type="number" id="setMaxOngkirMulti" class="w-full mb-4 px-4 py-3 border-2 border-gray-100 rounded-xl outline-none focus:border-brandPrimary text-sm font-bold bg-bgMain" placeholder="Jika beli dari 2 toko atau lebih">
+
+                                <label class="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Biaya Layanan Aplikasi (Rp)</label>
+                                <input type="number" id="setLayanan" class="w-full mb-4 px-4 py-3 border-2 border-gray-100 rounded-xl outline-none focus:border-brandPrimary text-sm font-bold bg-bgMain">
+
+                                <label class="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Batas Maksimum Jarak Antar (KM)</label>
+                                <input type="number" id="setMaxDistance" class="w-full px-4 py-3 border-2 border-gray-100 rounded-xl outline-none focus:border-brandPrimary text-sm font-bold bg-bgMain">
+                            </div>
+
+                            <!-- Keamanan Admin -->
+                            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 h-fit">
+                                <h3 class="font-bold text-lg mb-4 text-textMain border-b pb-2"><i class="fas fa-shield-alt text-brandPrimary mr-2"></i> Keamanan Admin</h3>
+                                
+                                <label class="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Email Pemulihan Admin</label>
+                                <input type="email" id="setAdminEmail" class="w-full mb-4 px-4 py-3 border-2 border-gray-100 rounded-xl outline-none focus:border-brandPrimary text-sm font-bold bg-bgMain">
+                                
+                                <label class="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">PIN Login Baru (6 Digit)</label>
+                                <input type="password" id="setAdminPin" maxlength="6" class="w-full mb-4 px-4 py-3 border-2 border-gray-100 rounded-xl outline-none focus:border-brandPrimary text-sm font-bold bg-bgMain tracking-widest text-center">
+                                
+                                <label class="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Konfirmasi PIN</label>
+                                <input type="password" id="confirmAdminPin" maxlength="6" class="w-full px-4 py-3 border-2 border-gray-100 rounded-xl outline-none focus:border-brandPrimary text-sm font-bold bg-bgMain tracking-widest text-center">
+                            </div>
+                        </div>
+                        <button type="submit" id="btnSaveSettings" class="btn-3d bg-gradient-to-r from-brandAccent to-brandPrimary text-white px-8 py-4 rounded-xl font-bold hover:shadow-lg transition w-full md:w-auto flex items-center justify-center gap-2">
+                            <i class="fas fa-save"></i> SIMPAN SEMUA PENGATURAN
+                        </button>
                     </form>
+                </section>
 
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr class="bg-gray-50 text-gray-500 text-sm border-b-2 border-gray-200">
-                                    <th class="p-3 font-bold">Nama Kategori</th>
-                                    <th class="p-3 font-bold">ID Database</th>
-                                    <th class="p-3 font-bold">Status</th>
-                                    <th class="p-3 font-bold text-center">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody id="table-categories" class="text-sm">
-                                <tr><td colspan="4" class="text-center p-4 text-gray-500">Memuat kategori...</td></tr>
-                            </tbody>
-                        </table>
+                <!-- SECTION: MITRA TOKO (SELLERS) -->
+                <section id="section-sellers" class="hidden animate-fade-in">
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="p-4 border-b bg-gray-50"><h3 class="font-bold text-lg text-textMain"><i class="fas fa-store text-brandPrimary mr-2"></i> Daftar Mitra Toko</h3></div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-gray-100 text-gray-600"><tr><th class="p-3">ID Toko</th><th class="p-3">Nama Toko</th><th class="p-3">Pemilik</th><th class="p-3">Kontak</th><th class="p-3">Status</th><th class="p-3">Aksi</th></tr></thead>
+                                <tbody id="table-sellers" class="divide-y divide-gray-100">
+                                    <tr><td colspan="6" class="text-center p-4">Memuat data...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                </div>
-            </section>
+                </section>
 
-            <!-- SECTION: PROFIL & TARIF -->
-            <section id="section-settings" class="hidden animate-fade-in">
-                <form id="form-settings" onsubmit="saveSettings(event)" class="space-y-6">
+                <!-- SECTION: MITRA KURIR (DRIVERS) -->
+                <section id="section-drivers" class="hidden animate-fade-in">
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="p-4 border-b bg-gray-50"><h3 class="font-bold text-lg text-textMain"><i class="fas fa-motorcycle text-brandPrimary mr-2"></i> Daftar Mitra Kurir</h3></div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-gray-100 text-gray-600"><tr><th class="p-3">ID Kurir</th><th class="p-3">Nama Lengkap</th><th class="p-3">Kendaraan</th><th class="p-3">Kontak</th><th class="p-3">Status</th><th class="p-3">Aksi</th></tr></thead>
+                                <tbody id="table-drivers" class="divide-y divide-gray-100">
+                                    <tr><td colspan="6" class="text-center p-4">Memuat data...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- SECTION: PELANGGAN (BUYERS) -->
+                <section id="section-buyers" class="hidden animate-fade-in">
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="p-4 border-b bg-gray-50"><h3 class="font-bold text-lg text-textMain"><i class="fas fa-users text-brandPrimary mr-2"></i> Daftar Pelanggan</h3></div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-gray-100 text-gray-600"><tr><th class="p-3">ID User</th><th class="p-3">Nama</th><th class="p-3">Kontak</th><th class="p-3">Terakhir Online</th><th class="p-3">Status</th><th class="p-3">Aksi</th></tr></thead>
+                                <tbody id="table-buyers" class="divide-y divide-gray-100">
+                                    <tr><td colspan="6" class="text-center p-4">Memuat data...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- SECTION: METODE BAYAR & KIRIM -->
+                <section id="section-payment-delivery" class="hidden animate-fade-in">
+                    <div class="flex justify-between items-center mb-6 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+                        <div>
+                            <h2 class="text-xl font-black text-textMain"><i class="fas fa-wallet text-brandPrimary mr-2"></i> Metode Bayar & Kirim</h2>
+                            <p class="text-xs text-gray-500 font-medium mt-1">Opsi ini otomatis muncul di form Checkout Pembeli.</p>
+                        </div>
+                        <button onclick="savePaymentDeliverySettings()" id="btnSaveMethods" class="btn-3d bg-gradient-to-r from-brandAccent to-brandPrimary text-white px-6 py-3 rounded-xl font-bold shadow-[0_4px_0_0_#7C3AED] hover:from-[#DB2777] hover:to-brandPrimaryHover transition flex items-center gap-2">
+                            <i class="fas fa-save"></i> Simpan Perubahan
+                        </button>
+                    </div>
+
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- Tarif Ongkir -->
+                        <!-- Metode Pembayaran -->
                         <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                            <h3 class="font-bold text-lg mb-4 text-textMain border-b pb-2"><i class="fas fa-coins text-yellow-500 mr-2"></i> Pengaturan Tarif & Jarak</h3>
-                            
-                            <label class="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Tarif Ongkir per KM (Rp)</label>
-                            <input type="number" id="setOngkir" class="w-full mb-4 px-4 py-3 border-2 border-gray-100 rounded-xl outline-none focus:border-brandPrimary text-sm font-bold bg-bgMain">
-                            
-                            <label class="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Maksimum Ongkir Normal (Rp)</label>
-                            <input type="number" id="setMaxOngkir" class="w-full mb-4 px-4 py-3 border-2 border-gray-100 rounded-xl outline-none focus:border-brandPrimary text-sm font-bold bg-bgMain">
-
-                            <label class="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Maksimum Ongkir Multi-Toko (Rp)</label>
-                            <input type="number" id="setMaxOngkirMulti" class="w-full mb-4 px-4 py-3 border-2 border-gray-100 rounded-xl outline-none focus:border-brandPrimary text-sm font-bold bg-bgMain" placeholder="Jika beli dari 2 toko atau lebih">
-
-                            <label class="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Biaya Layanan Aplikasi (Rp)</label>
-                            <input type="number" id="setLayanan" class="w-full mb-4 px-4 py-3 border-2 border-gray-100 rounded-xl outline-none focus:border-brandPrimary text-sm font-bold bg-bgMain">
-
-                            <label class="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Batas Maksimum Jarak Antar (KM)</label>
-                            <input type="number" id="setMaxDistance" class="w-full px-4 py-3 border-2 border-gray-100 rounded-xl outline-none focus:border-brandPrimary text-sm font-bold bg-bgMain">
+                            <h3 class="font-bold text-lg mb-4 text-textMain border-b pb-2"><i class="fas fa-money-bill-wave text-green-500 mr-2"></i> Metode Pembayaran</h3>
+                            <div class="flex gap-2 mb-4">
+                                <input type="text" id="newPaymentMethod" placeholder="Contoh: Transfer BCA" class="flex-1 border-2 border-gray-100 rounded-xl px-4 py-2 text-sm focus:border-brandPrimary outline-none bg-bgMain">
+                                <button onclick="addPaymentMethod()" class="btn-3d bg-gray-800 text-white px-4 py-2 rounded-xl font-bold hover:bg-black transition shadow-[0_3px_0_0_#374151]"><i class="fas fa-plus"></i> Tambah</button>
+                            </div>
+                            <div id="payment-methods-list" class="flex flex-col gap-3">
+                                <div class="text-center text-gray-400 text-sm py-4">Memuat...</div>
+                            </div>
                         </div>
 
-                        <!-- Keamanan Admin -->
-                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 h-fit">
-                            <h3 class="font-bold text-lg mb-4 text-textMain border-b pb-2"><i class="fas fa-shield-alt text-brandPrimary mr-2"></i> Keamanan Admin</h3>
-                            
-                            <label class="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Email Pemulihan Admin</label>
-                            <input type="email" id="setAdminEmail" class="w-full mb-4 px-4 py-3 border-2 border-gray-100 rounded-xl outline-none focus:border-brandPrimary text-sm font-bold bg-bgMain">
-                            
-                            <label class="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">PIN Login Baru (6 Digit)</label>
-                            <input type="password" id="setAdminPin" maxlength="6" class="w-full mb-4 px-4 py-3 border-2 border-gray-100 rounded-xl outline-none focus:border-brandPrimary text-sm font-bold bg-bgMain tracking-widest text-center">
-                            
-                            <label class="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Konfirmasi PIN</label>
-                            <input type="password" id="confirmAdminPin" maxlength="6" class="w-full px-4 py-3 border-2 border-gray-100 rounded-xl outline-none focus:border-brandPrimary text-sm font-bold bg-bgMain tracking-widest text-center">
+                        <!-- Metode Pengiriman -->
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                            <h3 class="font-bold text-lg mb-4 text-textMain border-b pb-2"><i class="fas fa-motorcycle text-blue-500 mr-2"></i> Metode Pengiriman</h3>
+                            <div class="flex gap-2 mb-4">
+                                <input type="text" id="newDeliveryMethod" placeholder="Contoh: Ambil Sendiri" class="flex-1 border-2 border-gray-100 rounded-xl px-4 py-2 text-sm focus:border-brandPrimary outline-none bg-bgMain">
+                                <button onclick="addDeliveryMethod()" class="btn-3d bg-gray-800 text-white px-4 py-2 rounded-xl font-bold hover:bg-black transition shadow-[0_3px_0_0_#374151]"><i class="fas fa-plus"></i> Tambah</button>
+                            </div>
+                            <div id="delivery-methods-list" class="flex flex-col gap-3">
+                                <div class="text-center text-gray-400 text-sm py-4">Memuat...</div>
+                            </div>
                         </div>
                     </div>
-                    <button type="submit" id="btnSaveSettings" class="btn-3d bg-gradient-to-r from-brandAccent to-brandPrimary text-white px-8 py-4 rounded-xl font-bold hover:shadow-lg transition w-full md:w-auto flex items-center justify-center gap-2">
-                        <i class="fas fa-save"></i> SIMPAN SEMUA PENGATURAN
-                    </button>
-                </form>
-            </section>
-
-            <!-- SECTION: MITRA TOKO (SELLERS) -->
-            <section id="section-sellers" class="hidden animate-fade-in">
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div class="p-4 border-b bg-gray-50"><h3 class="font-bold text-lg text-textMain"><i class="fas fa-store text-brandPrimary mr-2"></i> Daftar Mitra Toko</h3></div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-sm">
-                            <thead class="bg-gray-100 text-gray-600"><tr><th class="p-3">ID Toko</th><th class="p-3">Nama Toko</th><th class="p-3">Pemilik</th><th class="p-3">Kontak</th><th class="p-3">Status</th><th class="p-3">Aksi</th></tr></thead>
-                            <tbody id="table-sellers" class="divide-y divide-gray-100">
-                                <tr><td colspan="6" class="text-center p-4">Memuat data...</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
-
-            <!-- SECTION: MITRA KURIR (DRIVERS) -->
-            <section id="section-drivers" class="hidden animate-fade-in">
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div class="p-4 border-b bg-gray-50"><h3 class="font-bold text-lg text-textMain"><i class="fas fa-motorcycle text-brandPrimary mr-2"></i> Daftar Mitra Kurir</h3></div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-sm">
-                            <thead class="bg-gray-100 text-gray-600"><tr><th class="p-3">ID Kurir</th><th class="p-3">Nama Lengkap</th><th class="p-3">Kendaraan</th><th class="p-3">Kontak</th><th class="p-3">Status</th><th class="p-3">Aksi</th></tr></thead>
-                            <tbody id="table-drivers" class="divide-y divide-gray-100">
-                                <tr><td colspan="6" class="text-center p-4">Memuat data...</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
-
-            <!-- SECTION: PELANGGAN (BUYERS) -->
-            <section id="section-buyers" class="hidden animate-fade-in">
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div class="p-4 border-b bg-gray-50"><h3 class="font-bold text-lg text-textMain"><i class="fas fa-users text-brandPrimary mr-2"></i> Daftar Pelanggan</h3></div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-sm">
-                            <thead class="bg-gray-100 text-gray-600"><tr><th class="p-3">ID User</th><th class="p-3">Nama</th><th class="p-3">Kontak</th><th class="p-3">Terakhir Online</th><th class="p-3">Status</th><th class="p-3">Aksi</th></tr></thead>
-                            <tbody id="table-buyers" class="divide-y divide-gray-100">
-                                <tr><td colspan="6" class="text-center p-4">Memuat data...</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
-
-            <!-- SECTION BARU: METODE BAYAR & KIRIM -->
-            <section id="section-payment-delivery" class="hidden animate-fade-in">
-                <div class="flex justify-between items-center mb-6 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-                    <div>
-                        <h2 class="text-xl font-black text-textMain"><i class="fas fa-wallet text-brandPrimary mr-2"></i> Metode Bayar & Kirim</h2>
-                        <p class="text-xs text-gray-500 font-medium mt-1">Opsi ini akan otomatis muncul di form Checkout Pembeli.</p>
-                    </div>
-                    <button onclick="savePaymentDeliverySettings()" id="btnSaveMethods" class="btn-3d bg-gradient-to-r from-brandAccent to-brandPrimary text-white px-6 py-3 rounded-xl font-bold shadow-[0_4px_0_0_#7C3AED] hover:from-[#DB2777] hover:to-brandPrimaryHover transition flex items-center gap-2">
-                        <i class="fas fa-save"></i> Simpan Perubahan
-                    </button>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Metode Pembayaran -->
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                        <h3 class="font-bold text-lg mb-4 text-textMain border-b pb-2"><i class="fas fa-money-bill-wave text-green-500 mr-2"></i> Metode Pembayaran</h3>
-                        <div class="flex gap-2 mb-4">
-                            <input type="text" id="newPaymentMethod" placeholder="Contoh: Transfer BCA" class="flex-1 border-2 border-gray-100 rounded-xl px-4 py-2 text-sm focus:border-brandPrimary outline-none bg-bgMain">
-                            <button onclick="addPaymentMethod()" class="btn-3d bg-gray-800 text-white px-4 py-2 rounded-xl font-bold hover:bg-black transition shadow-[0_3px_0_0_#374151]"><i class="fas fa-plus"></i> Tambah</button>
-                        </div>
-                        <div id="payment-methods-list" class="flex flex-col gap-3">
-                            <div class="text-center text-gray-400 text-sm py-4">Memuat...</div>
-                        </div>
-                    </div>
-
-                    <!-- Metode Pengiriman -->
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                        <h3 class="font-bold text-lg mb-4 text-textMain border-b pb-2"><i class="fas fa-motorcycle text-blue-500 mr-2"></i> Metode Pengiriman</h3>
-                        <div class="flex gap-2 mb-4">
-                            <input type="text" id="newDeliveryMethod" placeholder="Contoh: Ambil Sendiri" class="flex-1 border-2 border-gray-100 rounded-xl px-4 py-2 text-sm focus:border-brandPrimary outline-none bg-bgMain">
-                            <button onclick="addDeliveryMethod()" class="btn-3d bg-gray-800 text-white px-4 py-2 rounded-xl font-bold hover:bg-black transition shadow-[0_3px_0_0_#374151]"><i class="fas fa-plus"></i> Tambah</button>
-                        </div>
-                        <div id="delivery-methods-list" class="flex flex-col gap-3">
-                            <div class="text-center text-gray-400 text-sm py-4">Memuat...</div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
+                </section>
+            </div>
         </main>
     </div>
 
     <!-- JAVASCRIPT LOGIC -->
     <script>
+        // INISIALISASI FIREBASE (Wajib untuk sistem Chat)
+        const firebaseConfig = {
+            apiKey: "AIzaSyAkiF2oITWNJYX1rdYc-EyIeiZiNukifTM",
+            authDomain: "foodcourt-74dbb.firebaseapp.com",
+            projectId: "foodcourt-74dbb",
+            storageBucket: "foodcourt-74dbb.firebasestorage.app",
+            messagingSenderId: "447304027735",
+            appId: "1:447304027735:web:de7ad6bca69ac58c3edd12",
+            measurementId: "G-7E66ZVWGRP"
+        };
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.firestore();
+
         // --- TOAST NOTIFICATION ---
         let toastTimeout;
         function showToast(message, type = "info") {
@@ -383,12 +467,173 @@
         let globalPaymentMethods = [];
         let globalDeliveryMethods = [];
 
+        // =====================================
+        // SISTEM CHAT ADMIN (CUSTOMER SERVICE)
+        // =====================================
+        let activeAdminChatId = null;
+        let adminChatRoomUnsubscribe = null;
+        let adminChatListUnsubscribe = null;
+
+        function initAdminChat() {
+            if (adminChatListUnsubscribe) adminChatListUnsubscribe();
+
+            // Admin menangkap semua pesan yang dialamatkan ke "Customer Service"
+            adminChatListUnsubscribe = db.collection('chats')
+                .where('sellerName', '==', 'Customer Service')
+                .onSnapshot(snapshot => {
+                    let chats = [];
+                    snapshot.forEach(doc => { let data = doc.data(); data.id = doc.id; chats.push(data); });
+                    
+                    // Sorting Client-side
+                    chats.sort((a,b) => {
+                        let tA = a.timestamp ? a.timestamp.toMillis() : 0;
+                        let tB = b.timestamp ? b.timestamp.toMillis() : 0;
+                        return tB - tA;
+                    });
+
+                    const listContainer = document.getElementById('admin-chat-list');
+                    const totalChatEl = document.getElementById('cs-total-chat');
+                    if(totalChatEl) totalChatEl.innerText = chats.length;
+
+                    if (chats.length === 0) {
+                        if(listContainer) listContainer.innerHTML = '<div class="text-center text-gray-400 mt-10 font-bold"><i class="fas fa-inbox text-4xl mb-2 opacity-30"></i><br>Tidak ada pesan masuk.</div>';
+                        return;
+                    }
+
+                    let html = '';
+                    chats.forEach(chat => {
+                        let timeStr = '';
+                        if (chat.timestamp) { 
+                            const date = chat.timestamp.toDate(); 
+                            timeStr = date.getHours().toString().padStart(2, '0') + ':' + date.getMinutes().toString().padStart(2, '0'); 
+                        }
+                        
+                        const isActive = activeAdminChatId === chat.id ? 'bg-purple-50 border-brandPrimary' : 'bg-white border-gray-100 hover:border-brandPrimary';
+                        
+                        // Deteksi apakah pengirim pesan adalah Toko (Penjual) atau Pembeli biasa
+                        const isStore = chat.buyerName.includes('(Toko)') || chat.buyerId.startsWith('SEL-');
+                        const iconClass = isStore ? 'fa-store text-orange-500' : 'fa-user text-blue-500';
+                        const safeBuyerName = chat.buyerName.replace(/'/g, "\\'");
+
+                        html += `
+                        <div onclick="openAdminChat('${chat.id}', '${safeBuyerName}', ${isStore})" class="p-3 border-2 rounded-xl mb-2 cursor-pointer transition flex gap-3 items-center ${isActive} shadow-sm group">
+                            <div class="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center shrink-0 group-hover:scale-105 transition">
+                                <i class="fas ${iconClass}"></i>
+                            </div>
+                            <div class="flex-1 overflow-hidden">
+                                <div class="flex justify-between items-end mb-0.5">
+                                    <span class="font-bold text-sm text-gray-800 truncate">${chat.buyerName}</span>
+                                    <span class="text-[9px] font-bold text-gray-400">${timeStr}</span>
+                                </div>
+                                <div class="text-xs text-gray-500 truncate font-medium">${chat.lastMessage || '...'}</div>
+                            </div>
+                        </div>`;
+                    });
+                    if(listContainer) listContainer.innerHTML = html;
+
+                    // Mengatur kemunculan badge merah (!) di tombol Chat atas
+                    const currentHash = JSON.stringify(chats.map(c => c.id + (c.lastMessage||'')));
+                    const lastSeenHash = localStorage.getItem('scoolshop_admin_seen_chats');
+                    
+                    const badge = document.getElementById('admin-chat-badge');
+                    const isChatActive = !document.getElementById('section-chat').classList.contains('hidden');
+
+                    if (isChatActive) {
+                        localStorage.setItem('scoolshop_admin_seen_chats', currentHash);
+                        if(badge) badge.classList.add('hidden');
+                    } else if (lastSeenHash !== currentHash) {
+                        if(badge) badge.classList.remove('hidden');
+                    }
+
+                }, error => {
+                    const listContainer = document.getElementById('admin-chat-list');
+                    if(listContainer) listContainer.innerHTML = '<div class="text-center text-red-500 mt-10 font-bold">Gagal memuat chat.</div>';
+                });
+        }
+
+        function openAdminChat(chatId, senderName, isStore = false) {
+            activeAdminChatId = chatId;
+            
+            document.getElementById('admin-chat-empty').classList.add('hidden');
+            document.getElementById('admin-chat-room').classList.remove('hidden');
+            document.getElementById('admin-chat-buyer-name').innerText = senderName;
+            
+            const iconEl = document.getElementById('admin-chat-room-icon');
+            if (iconEl) {
+                iconEl.className = isStore ? "fas fa-store" : "fas fa-user";
+            }
+            
+            const badge = document.getElementById('admin-chat-badge');
+            if(badge) badge.classList.add('hidden');
+            
+            db.collection('chats').where('sellerName', '==', 'Customer Service').get().then(snap => {
+                let ch = []; snap.forEach(d=> {let dd=d.data(); dd.id=d.id; ch.push(dd);});
+                localStorage.setItem('scoolshop_admin_seen_chats', JSON.stringify(ch.map(c=> c.id + (c.lastMessage||''))));
+            });
+
+            const msgsContainer = document.getElementById('admin-chat-messages');
+            msgsContainer.innerHTML = '<div class="text-center text-gray-400 font-bold py-10"><i class="fas fa-spinner fa-spin mr-2"></i> Memuat percakapan...</div>';
+
+            if(adminChatRoomUnsubscribe) adminChatRoomUnsubscribe();
+            
+            adminChatRoomUnsubscribe = db.collection('chats').doc(chatId).collection('messages')
+                .orderBy('timestamp', 'asc').onSnapshot(snapshot => {
+                    let msgs = [];
+                    snapshot.forEach(doc => msgs.push(doc.data()));
+
+                    msgsContainer.innerHTML = '';
+                    if(msgs.length === 0) {
+                         msgsContainer.innerHTML = '<div class="text-center py-10 text-gray-400 text-xs mt-auto mb-auto">Mulai percakapan...</div>';
+                         return;
+                    }
+
+                    msgs.forEach(msg => {
+                        const isMe = msg.sender === 'seller'; // Admin
+                        const align = isMe ? 'justify-end' : 'justify-start';
+                        const color = isMe ? 'bg-brandPrimary text-white rounded-br-none shadow-[0_2px_10px_rgba(139,92,246,0.3)]' : 'bg-white text-gray-800 border-2 border-gray-100 rounded-bl-none shadow-sm';
+                        let timeStr = '';
+                        if (msg.timestamp) { const date = msg.timestamp.toDate(); timeStr = date.getHours().toString().padStart(2, '0') + ':' + date.getMinutes().toString().padStart(2, '0'); }
+                        
+                        msgsContainer.innerHTML += `
+                        <div class="flex ${align} w-full mb-1">
+                            <div class="max-w-[80%] p-3 rounded-2xl ${color} text-sm flex flex-col relative">
+                                <span class="font-medium leading-relaxed">${msg.text}</span>
+                                <span class="text-[9px] mt-1 ${isMe ? 'text-white/70 text-right' : 'text-gray-400 text-left'}">${timeStr}</span>
+                            </div>
+                        </div>`;
+                    });
+                    msgsContainer.scrollTop = msgsContainer.scrollHeight;
+                    // Panggil ulang initAdminChat untuk memperbarui sorotan warna list di sebelah kiri
+                    initAdminChat(); 
+            });
+        }
+
+        async function sendAdminMessage(e) {
+            e.preventDefault();
+            const input = document.getElementById('adminChatInput');
+            const text = input.value.trim();
+            if(!text || !activeAdminChatId) return;
+            input.value = '';
+
+            const now = firebase.firestore.FieldValue.serverTimestamp();
+            try {
+                await db.collection('chats').doc(activeAdminChatId).set({ lastMessage: text, timestamp: now }, {merge: true});
+                await db.collection('chats').doc(activeAdminChatId).collection('messages').add({ sender: 'seller', text: text, timestamp: now });
+            } catch (err) {
+                showToast("Gagal mengirim pesan.", "error");
+            }
+        }
+
+        // =====================================
+        // MANAJEMEN LOGIN & TAMPILAN
+        // =====================================
         function checkAuth() {
             if (isLoggedIn) {
                 document.getElementById('login-screen').classList.add('hidden');
                 document.getElementById('main-dashboard').classList.remove('hidden');
                 refreshAllData();
                 startBackgroundSync();
+                initAdminChat(); // Memulai pemantauan Chat CS
             } else {
                 document.getElementById('login-screen').classList.remove('hidden');
                 document.getElementById('main-dashboard').classList.add('hidden');
@@ -461,7 +706,9 @@
             document.querySelectorAll('section').forEach(el => {
                 if(el.id !== 'login-screen') el.classList.add('hidden');
             });
-            document.getElementById('section-' + tabId).classList.remove('hidden');
+            
+            const targetSection = document.getElementById('section-' + tabId);
+            if(targetSection) targetSection.classList.remove('hidden');
 
             document.querySelectorAll('.menu-item').forEach(el => {
                 el.classList.remove('bg-white/10', 'text-white');
@@ -474,6 +721,16 @@
                 activeMenu.classList.add('bg-white/10', 'text-white');
             }
 
+            if (tabId === 'chat') {
+                const badge = document.getElementById('admin-chat-badge');
+                if (badge) badge.classList.add('hidden');
+                
+                db.collection('chats').where('sellerName', '==', 'Customer Service').get().then(snap => {
+                    let ch = []; snap.forEach(d=> {let dd=d.data(); dd.id=d.id; ch.push(dd);});
+                    localStorage.setItem('scoolshop_admin_seen_chats', JSON.stringify(ch.map(c=> c.id + (c.lastMessage||''))));
+                });
+            }
+
             const titles = {
                 'dashboard': 'Ringkasan Sistem',
                 'categories': 'Kategori Produk',
@@ -481,7 +738,8 @@
                 'sellers': 'Mitra Toko',
                 'drivers': 'Mitra Kurir',
                 'buyers': 'Pelanggan',
-                'payment-delivery': 'Metode Bayar & Kirim'
+                'payment-delivery': 'Metode Bayar & Kirim',
+                'chat': 'Pusat Layanan Pelanggan (CS)'
             };
             document.getElementById('header-title').innerText = titles[tabId] || 'Dashboard';
         }
@@ -609,7 +867,6 @@
                 if (resSettings.status === 'success' && resSettings.data) {
                     const set = resSettings.data;
                     
-                    // PERBAIKAN AUTO-SYNC: Hanya load saat BUKAN background sync agar ketikan Admin tidak tertimpa
                     if(!isBackground) {
                         document.getElementById('setOngkir').value = set.fee_ongkir || 2000;
                         document.getElementById('setMaxOngkir').value = set.max_ongkir || 50000;
@@ -620,7 +877,6 @@
                         document.getElementById('setAdminPin').value = set.admin_pin || '';
                         document.getElementById('confirmAdminPin').value = set.admin_pin || '';
 
-                        // Parsing Metode Bayar & Kirim
                         if(set.payment_methods) {
                             try { globalPaymentMethods = JSON.parse(set.payment_methods); } catch(e) { globalPaymentMethods = []; }
                         } else {
@@ -643,9 +899,6 @@
             }
         }
 
-        // =====================================
-        // LOGIKA METODE BAYAR & KIRIM
-        // =====================================
         function renderPaymentMethods() {
             const container = document.getElementById('payment-methods-list');
             container.innerHTML = '';
@@ -758,7 +1011,6 @@
                 if(data.status === 'success') showToast('Pengaturan Bayar & Kirim berhasil disimpan!', 'success');
                 else showToast('Gagal: ' + data.message, 'error');
             } catch(e) {
-                // Fallback Notifikasi: Mengabaikan error CORS dari GAS karena data terbukti masuk
                 showToast('Pengaturan Bayar & Kirim berhasil disimpan!', 'success');
             } finally {
                 btn.innerHTML = '<i class="fas fa-save"></i> Simpan Perubahan';
@@ -766,9 +1018,6 @@
             }
         }
 
-        // =====================================
-        // FUNGSI UMUM ADMIN LAINNYA
-        // =====================================
         async function saveSettings(e) {
             e.preventDefault();
             const pin1 = document.getElementById('setAdminPin').value;
@@ -807,7 +1056,6 @@
                     showToast('Gagal menyimpan.', 'error');
                 }
             } catch (e) {
-                // Fallback Notifikasi: Mengabaikan error CORS dari GAS karena data terbukti masuk
                 showToast('Semua Pengaturan Disimpan!', 'success');
             } finally {
                 btn.innerHTML = '<i class="fas fa-save"></i> SIMPAN SEMUA PENGATURAN';
