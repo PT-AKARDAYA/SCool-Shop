@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+    <!-- [DIPERBAIKI]: Typo pada URL unpkg telah dihilangkan -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -2180,7 +2181,7 @@
                     loggedInUser = res.user; localStorage.setItem('scoolshop_buyer_login', JSON.stringify(loggedInUser));
                     updateAuthUI(); updatePresence('Online'); hideAuth(); e.target.reset(); 
                     syncOrdersSilently(); listenToChats();
-                    setTimeout(() => checkAndShowInstallPrompt(true), 1500); requestNotificationPermission();
+                    setTimeout(() => checkAndShowInstallPrompt(), 1500); requestNotificationPermission();
                 } else { showToast(res.message, "error"); }
             } catch (error) { showToast("Gagal koneksi ke server.", "error"); } finally { btn.innerHTML = 'LOG IN'; btn.disabled = false; }
         }
@@ -2208,6 +2209,7 @@
                         loggedInUser = res.user; localStorage.setItem('scoolshop_buyer_login', JSON.stringify(loggedInUser));
                         updateAuthUI(); updatePresence('Online'); hideAuth(); 
                         syncOrdersSilently(); listenToChats();
+                        setTimeout(() => checkAndShowInstallPrompt(), 1500);
                         requestNotificationPermission(); showToast("Berhasil masuk!", "success");
                     } else { showToast(res.message, "error"); }
                 } catch(e) { showToast("Gagal terhubung ke database.", "error"); }
