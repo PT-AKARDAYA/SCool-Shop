@@ -14,9 +14,10 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-    <!-- Firebase SDK (Untuk Google Login) -->
+    <!-- Firebase SDK (Untuk Google Login & FIRESTORE CHAT) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
     <!-- PWA THEME COLOR -->
     <meta name="theme-color" content="#ee4d2d">
@@ -48,7 +49,7 @@
 </head>
 <body class="bg-bgMain font-sans text-gray-800 h-screen flex flex-col overflow-hidden relative">
 
-    <!-- ================= SUSPEND OVERLAY (REAL-TIME LOCK) ================= -->
+    <!-- ================= SUSPEND OVERLAY ================= -->
     <div id="suspend-overlay" class="hidden fixed inset-0 z-[999] bg-black/95 backdrop-blur-md flex-col justify-center items-center p-6 text-center">
         <i class="fas fa-user-lock text-red-500 text-7xl mb-6 animate-pulse"></i>
         <h1 class="text-3xl font-black text-white mb-2 tracking-tight">Toko Dibekukan</h1>
@@ -59,7 +60,7 @@
         <button onclick="handleSellerLogout(true)" class="text-gray-400 font-bold hover:text-white transition underline text-sm py-2">Keluar Akun</button>
     </div>
 
-    <!-- ================= PWA INSTALL PROMPT MODAL ================= -->
+    <!-- ================= PWA INSTALL PROMPT ================= -->
     <div id="pwa-install-modal" class="hidden fixed inset-0 z-[300] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 opacity-0 transition-opacity duration-300 md:max-w-md md:mx-auto">
         <div class="bg-white rounded-3xl shadow-[0_15px_50px_rgba(0,0,0,0.3)] w-full max-w-sm overflow-hidden flex flex-col transform scale-95 transition-transform duration-300 border border-white/20">
             <div class="bg-gradient-to-r from-brandPrimary to-[#ff7337] text-white p-5 font-black text-lg flex items-center gap-3">
@@ -94,6 +95,38 @@
                     <button id="modalBtnCancel" class="btn-3d hidden flex-1 px-5 py-2.5 bg-white border-2 border-gray-200 text-gray-600 rounded-xl font-bold hover:bg-gray-50 shadow-[0_3px_0_0_#e5e7eb]">Batal</button>
                     <button id="modalBtnConfirm" class="btn-3d flex-1 px-5 py-2.5 bg-brandPrimary text-white rounded-xl font-bold hover:bg-brandPrimaryHover shadow-[0_4px_0_0_#be3118]">OK</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= CHAT ROOM OVERLAY ================= -->
+    <div id="seller-chat-overlay" class="hidden fixed inset-0 z-[160] bg-black/60 backdrop-blur-sm flex items-center justify-center p-0 md:p-4">
+        <div class="bg-white md:rounded-2xl shadow-2xl w-full h-full md:h-[85vh] md:max-w-xl overflow-hidden flex flex-col">
+            <!-- Header -->
+            <div class="bg-brandPrimary text-white p-3 shadow-sm flex items-center gap-3 shrink-0 border-b z-20">
+                <button onclick="closeSellerChat()" class="text-white hover:text-gray-200 w-8 h-8 flex justify-center items-center transition text-xl"><i class="fas fa-arrow-left"></i></button>
+                <div class="flex items-center gap-3 flex-1 overflow-hidden">
+                    <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white shrink-0 shadow-inner">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="flex flex-col truncate">
+                        <h2 class="text-base font-bold text-white truncate" id="seller-chat-buyer-name">Nama Pembeli</h2>
+                        <span class="text-[10px] text-white/80 font-semibold">Pelanggan</span>
+                    </div>
+                </div>
+            </div>
+            <!-- Messages -->
+            <div id="seller-chat-messages" class="p-4 flex-1 overflow-y-auto flex flex-col gap-3 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-gray-50/50">
+                <!-- Pesan render di sini -->
+            </div>
+            <!-- Input -->
+            <div class="p-3 bg-white border-t flex gap-2 shrink-0 items-center">
+                <form onsubmit="submitSellerMessage(event)" class="flex w-full gap-2 relative">
+                    <input type="text" id="sellerChatInput" autocomplete="off" placeholder="Balas pesan pembeli..." class="flex-1 bg-gray-100 border border-gray-200 rounded-full px-4 py-2.5 text-sm focus:outline-none focus:border-brandPrimary focus:ring-1 focus:ring-brandPrimary transition">
+                    <button type="submit" class="bg-brandPrimary text-white w-10 h-10 rounded-full flex items-center justify-center shadow-sm hover:bg-brandPrimaryHover transition-colors shrink-0">
+                        <i class="fas fa-paper-plane text-sm transform -translate-x-0.5 translate-y-0.5"></i>
+                    </button>
+                </form>
             </div>
         </div>
     </div>
@@ -365,6 +398,11 @@
                     <i class="fas fa-sync-alt" id="sync-icon"></i>
                     <span id="sync-time">Menunggu sinkron...</span>
                 </div>
+
+                <!-- TAMBAHAN: Tombol Chat CS (Bantuan Admin) -->
+                <button onclick="openCSChat()" class="btn-3d relative w-9 h-9 rounded-full bg-blue-50 text-blue-600 hover:text-white hover:bg-blue-500 flex items-center justify-center shadow-[0_2px_0_0_#93c5fd] transition-colors" title="Bantuan / Chat CS">
+                    <i class="fas fa-headset text-lg"></i>
+                </button>
                 
                 <div class="hidden md:flex items-center gap-2 text-gray-600 font-bold bg-orange-50 px-3 py-1.5 rounded-full border border-orange-100 shadow-sm cursor-pointer hover:bg-orange-100 transition">
                     <img src="https://placehold.co/100x100/ee4d2d/white?text=Toko" alt="Logo Outlet" class="w-7 h-7 rounded-full object-cover border-2 border-white shadow-sm">
@@ -396,6 +434,12 @@
                     <i class="fas fa-box w-5 text-center text-lg drop-shadow-sm"></i> Produk Saya
                 </a>
                 
+                <!-- TAMBAHAN: Menu Chat Desktop dengan Tanda Badge -->
+                <a href="#" onclick="switchTab('chat')" id="menu-chat" class="block py-3 px-4 rounded-xl text-sm text-gray-600 hover:bg-orange-50 hover:text-brandPrimary transition flex items-center gap-3 font-bold mb-1">
+                    <i class="fas fa-comment-dots w-5 text-center text-lg drop-shadow-sm"></i> Chat Pembeli
+                    <span id="sidebar-chat-badge" class="ml-auto bg-brandPrimary text-white text-[10px] font-black px-2 py-0.5 rounded-full hidden shadow-sm">Baru</span>
+                </a>
+
                 <div class="px-3 mt-6 mb-2 text-xs font-bold text-gray-400 uppercase tracking-wider">Pengaturan</div>
                 <a href="#" onclick="switchTab('profile')" id="menu-profile" class="block py-3 px-4 rounded-xl text-sm text-gray-600 hover:bg-orange-50 hover:text-brandPrimary transition flex items-center gap-3 font-bold mb-1">
                     <i class="fas fa-store-alt w-5 text-center text-lg drop-shadow-sm"></i> Profil Outlet
@@ -615,6 +659,16 @@
                 </div>
             </section>
 
+            <!-- SECTION: CHAT PEMBELI -->
+            <section id="section-chat" class="hidden h-full flex flex-col">
+                <div class="flex flex-col md:flex-row justify-between md:items-center mb-4 gap-4 shrink-0">
+                    <h1 class="text-2xl font-bold text-gray-800 drop-shadow-sm">Pesan Masuk</h1>
+                </div>
+                <div class="bg-white rounded-2xl shadow-sm border-2 border-gray-100 flex-1 overflow-y-auto p-4" id="seller-chat-list">
+                    <!-- Daftar Obrolan Masuk Render Di Sini -->
+                </div>
+            </section>
+
             <!-- SECTION: PROFILE -->
             <section id="section-profile" class="hidden">
                 <div class="flex flex-col md:flex-row justify-between md:items-center mb-6 gap-4">
@@ -765,8 +819,6 @@
             </section>
 
         </main>
-    </div>
-
     <!-- MOBILE BOTTOM NAVIGATION (Seller Specific) -->
     <nav class="md:hidden fixed bottom-0 left-0 right-0 w-full bg-white border-t flex justify-around text-[10px] text-gray-500 pb-3 pt-2 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] z-50">
         <div onclick="switchTab('dashboard')" class="flex flex-col items-center cursor-pointer py-1 mobile-nav-item text-brandPrimary active:scale-90 transition-transform" data-target="dashboard">
@@ -775,12 +827,18 @@
         </div>
         <div onclick="switchTab('orders')" class="flex flex-col items-center cursor-pointer py-1 mobile-nav-item hover:text-brandPrimary relative active:scale-90 transition-transform" data-target="orders">
             <i class="fas fa-clipboard-list text-2xl mb-1 drop-shadow-sm"></i>
-            <span class="absolute top-0 right-2 bg-brandPrimary text-white text-[9px] font-bold px-1.5 rounded-full border-2 border-white shadow-sm" id="nav-badge-order">0</span>
+            <span class="absolute top-0 right-2 bg-brandPrimary text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full border-2 border-white shadow-sm" id="nav-badge-order">0</span>
             <span class="font-bold mt-1">Pesanan</span>
         </div>
         <div onclick="switchTab('products')" class="flex flex-col items-center cursor-pointer py-1 mobile-nav-item hover:text-brandPrimary active:scale-90 transition-transform" data-target="products">
             <i class="fas fa-box text-2xl mb-1 drop-shadow-sm"></i>
             <span class="font-bold mt-1">Produk</span>
+        </div>
+        <!-- TAMBAHAN: Ikon Chat Mobile dengan Tanda Badge -->
+        <div onclick="switchTab('chat')" class="flex flex-col items-center cursor-pointer py-1 mobile-nav-item hover:text-brandPrimary relative active:scale-90 transition-transform" data-target="chat">
+            <i class="fas fa-comment-dots text-2xl mb-1 drop-shadow-sm"></i>
+            <span id="mobile-chat-badge" class="absolute top-0 right-2 bg-brandPrimary text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full border-2 border-white shadow-sm hidden">!</span>
+            <span class="font-bold mt-1">Chat</span>
         </div>
         <div onclick="switchTab('profile')" class="flex flex-col items-center cursor-pointer py-1 mobile-nav-item hover:text-brandPrimary active:scale-90 transition-transform" data-target="profile">
             <i class="fas fa-store-alt text-2xl mb-1 drop-shadow-sm"></i>
@@ -792,7 +850,7 @@
 
     <!-- JAVASCRIPT LOGIC -->
     <script>
-        // --- FIREBASE CONFIGURATION (GOOGLE LOGIN) ---
+        // --- FIREBASE CONFIGURATION (GOOGLE LOGIN & FIRESTORE) ---
         const firebaseConfig = {
             apiKey: "AIzaSyAkiF2oITWNJYX1rdYc-EyIeiZiNukifTM",
             authDomain: "foodcourt-74dbb.firebaseapp.com",
@@ -808,10 +866,273 @@
         }
         const auth = firebase.auth();
         const googleProvider = new firebase.auth.GoogleAuthProvider();
+        const db = firebase.firestore();
+
+        // --- SISTEM CHAT SELLER ---
+        let activeChatId = null;
+        let activeBuyerName = null;
+        let sellerChatListUnsubscribe = null;
+        let sellerChatRoomUnsubscribe = null;
+        let globalSellerChatsHash = "";
+
+        // Fungsi kontrol tanda badge chat
+        function updateChatBadge(show) {
+            const mobileBadge = document.getElementById('mobile-chat-badge');
+            const sidebarBadge = document.getElementById('sidebar-chat-badge');
+            if (show) {
+                if(mobileBadge) mobileBadge.classList.remove('hidden');
+                if(sidebarBadge) sidebarBadge.classList.remove('hidden');
+            } else {
+                if(mobileBadge) mobileBadge.classList.add('hidden');
+                if(sidebarBadge) sidebarBadge.classList.add('hidden');
+            }
+        }
+
+        function loadSellerChats() {
+            const container = document.getElementById('seller-chat-list');
+            if (!SELLER_OUTLET_NAME) return;
+
+            container.innerHTML = '<div class="text-center py-10 text-gray-500 font-bold"><i class="fas fa-spinner fa-spin text-2xl mb-2"></i><br>Memuat chat...</div>';
+
+            if (sellerChatListUnsubscribe) sellerChatListUnsubscribe();
+
+            sellerChatListUnsubscribe = db.collection('chats').onSnapshot(snapshot => {
+                let chats = [];
+                snapshot.forEach(doc => {
+                    const chat = doc.data();
+                    chat.id = doc.id;
+                    // Hanya ambil chat untuk toko ini atau chat CS ke toko ini
+                    if (chat.sellerName === SELLER_OUTLET_NAME || (chat.sellerName === 'Customer Service' && chat.buyerId === SELLER_DATA.seller_id)) {
+                        chats.push(chat);
+                    }
+                });
+                
+                chats.sort((a, b) => {
+                    const timeA = a.timestamp ? a.timestamp.toMillis() : 0;
+                    const timeB = b.timestamp ? b.timestamp.toMillis() : 0;
+                    return timeB - timeA; // Terbaru di atas
+                });
+
+                // DETEKSI BADGE (PESAN BARU)
+                globalSellerChatsHash = JSON.stringify(chats.map(c => c.id + c.lastMessage));
+                const seenChatsHash = localStorage.getItem('scoolshop_seller_seen_chats');
+                const isChatActive = !document.getElementById('section-chat').classList.contains('hidden') || activeChatId !== null;
+
+                if (isChatActive) {
+                    // Jika sedang di menu chat, otomatis tandai terbaca
+                    localStorage.setItem('scoolshop_seller_seen_chats', globalSellerChatsHash);
+                    updateChatBadge(false);
+                } else if (globalSellerChatsHash !== seenChatsHash) {
+                    // Jika ada perubahan dan tidak di menu chat, tampilkan tanda
+                    updateChatBadge(true);
+                    if (document.visibilityState === 'hidden') {
+                        triggerSystemNotification("Pesan Baru 💬", "Ada pesan chat baru masuk ke Toko Anda.");
+                    }
+                }
+
+                container.innerHTML = '';
+                if (chats.length === 0) {
+                    container.innerHTML = '<div class="text-center py-10 text-gray-400 font-bold"><i class="fas fa-comments text-5xl mb-3 opacity-30 drop-shadow-sm"></i><p class="mt-2">Belum ada pesan masuk dari pelanggan.</p></div>';
+                    return;
+                }
+
+                chats.forEach(chat => {
+                    let timeStr = '';
+                    if (chat.timestamp) {
+                        const date = chat.timestamp.toDate();
+                        timeStr = date.getHours().toString().padStart(2, '0') + ':' + date.getMinutes().toString().padStart(2, '0');
+                    }
+
+                    // Deteksi gaya khusus jika ini adalah chat dari CS (Admin)
+                    const isCS = chat.sellerName === 'Customer Service';
+                    const titleName = isCS ? 'Customer Service (Admin)' : chat.buyerName;
+                    const badgeColor = isCS ? 'bg-blue-50 text-blue-500 border-blue-100' : 'bg-orange-50 text-brandPrimary border-orange-100';
+                    const iconType = isCS ? 'fa-headset' : 'fa-user';
+
+                    container.innerHTML += `
+                    <div onclick="${isCS ? 'openCSChat()' : `openSellerChat('${chat.id}', '${chat.buyerName}')`}" class="flex items-center gap-3 bg-white p-3 rounded-xl border border-gray-100 mb-2 cursor-pointer hover:border-brandPrimary transition shadow-sm group">
+                        <div class="w-12 h-12 rounded-full ${badgeColor} border flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                            <i class="fas ${iconType}"></i>
+                        </div>
+                        <div class="flex-1 overflow-hidden">
+                            <div class="flex justify-between items-end mb-1">
+                                <h4 class="font-bold text-sm text-gray-800 truncate ${isCS ? 'text-blue-600' : ''}">${titleName}</h4>
+                                <span class="text-[10px] text-gray-400 whitespace-nowrap">${timeStr}</span>
+                            </div>
+                            <p class="text-xs text-gray-500 truncate">${chat.lastMessage || '...'}</p>
+                        </div>
+                    </div>`;
+                });
+            }, error => {
+                if (error.message && error.message.includes('has not been used in project')) {
+                    container.innerHTML = '<div class="text-center py-10 text-red-500 font-bold px-4">Database Firestore Belum Aktif!<br><span class="text-xs font-normal text-gray-600 block mt-2">Silakan buat database Firestore di Firebase Console Anda agar fitur Chat berfungsi.</span></div>';
+                } else {
+                    container.innerHTML = '<div class="text-center py-10 text-red-500 font-bold">Gagal memuat chat. Pastikan internet Anda stabil.</div>';
+                }
+            });
+        }
+
+        function openSellerChat(chatId, buyerName) {
+            activeChatId = chatId;
+            activeBuyerName = buyerName;
+            
+            document.getElementById('seller-chat-buyer-name').innerText = buyerName;
+            document.getElementById('seller-chat-overlay').classList.remove('hidden');
+            document.getElementById('seller-chat-overlay').classList.add('flex');
+
+            const msgsContainer = document.getElementById('seller-chat-messages');
+            msgsContainer.innerHTML = '<div class="text-center py-4 text-gray-500 text-xs"><i class="fas fa-spinner fa-spin mr-1"></i> Memuat percakapan...</div>';
+
+            if(sellerChatRoomUnsubscribe) sellerChatRoomUnsubscribe();
+
+            sellerChatRoomUnsubscribe = db.collection('chats').doc(chatId).collection('messages')
+                .orderBy('timestamp', 'asc')
+                .onSnapshot(snapshot => {
+                    msgsContainer.innerHTML = '';
+                    if(snapshot.empty) {
+                        msgsContainer.innerHTML = '<div class="text-center py-10 text-gray-400 text-xs mt-auto mb-auto">Belum ada pesan.</div>';
+                        return;
+                    }
+
+                    snapshot.forEach(doc => {
+                        const msg = doc.data();
+                        const isMe = msg.sender === 'seller';
+                        const align = isMe ? 'justify-end' : 'justify-start';
+                        const color = isMe ? 'bg-brandPrimary text-white rounded-br-none' : 'bg-white text-gray-800 border border-gray-100 rounded-bl-none shadow-sm';
+                        
+                        let timeStr = '';
+                        if (msg.timestamp) {
+                            const date = msg.timestamp.toDate();
+                            timeStr = date.getHours().toString().padStart(2, '0') + ':' + date.getMinutes().toString().padStart(2, '0');
+                        }
+
+                        msgsContainer.innerHTML += `
+                        <div class="flex ${align} mb-1 w-full">
+                            <div class="max-w-[75%] p-3 rounded-2xl ${color} text-sm flex flex-col gap-1 relative">
+                                <span>${msg.text}</span>
+                                <span class="text-[9px] ${isMe ? 'text-white/70 text-right' : 'text-gray-400 text-left'}">${timeStr}</span>
+                            </div>
+                        </div>`;
+                    });
+                    
+                    msgsContainer.scrollTop = msgsContainer.scrollHeight;
+                }, error => {
+                    msgsContainer.innerHTML = '<div class="text-center text-red-500 text-xs py-4">Gagal memuat pesan.</div>';
+                });
+        }
+
+        // FUNGSI BARU: Buka Chat Khusus Customer Service
+        function openCSChat() {
+            if (!SELLER_DATA) {
+                window.alert("Silakan Login terlebih dahulu untuk menghubungi Admin.");
+                return;
+            }
+            activeChatId = SELLER_DATA.seller_id + "_CS";
+            activeBuyerName = "Customer Service (Admin)";
+            
+            document.getElementById('seller-chat-buyer-name').innerHTML = '<i class="fas fa-headset mr-1"></i> Customer Service';
+            document.getElementById('seller-chat-overlay').classList.remove('hidden');
+            document.getElementById('seller-chat-overlay').classList.add('flex');
+
+            const msgsContainer = document.getElementById('seller-chat-messages');
+            msgsContainer.innerHTML = '<div class="text-center py-4 text-gray-500 text-xs"><i class="fas fa-spinner fa-spin mr-1"></i> Memuat percakapan CS...</div>';
+
+            if(sellerChatRoomUnsubscribe) sellerChatRoomUnsubscribe();
+
+            sellerChatRoomUnsubscribe = db.collection('chats').doc(activeChatId).collection('messages')
+                .orderBy('timestamp', 'asc')
+                .onSnapshot(snapshot => {
+                    msgsContainer.innerHTML = '';
+                    if(snapshot.empty) {
+                        msgsContainer.innerHTML = '<div class="text-center py-10 text-gray-400 text-xs mt-auto mb-auto">Mulai percakapan dengan Admin SCooL Shop.</div>';
+                        return;
+                    }
+
+                    snapshot.forEach(doc => {
+                        const msg = doc.data();
+                        // Seller bertindak sebagai 'buyer' saat chat dengan CS agar nyambung ke Dashboard Admin
+                        const isMe = msg.sender === 'buyer'; 
+                        const align = isMe ? 'justify-end' : 'justify-start';
+                        const color = isMe ? 'bg-blue-500 text-white rounded-br-none' : 'bg-white text-gray-800 border border-gray-100 rounded-bl-none shadow-sm';
+                        
+                        let timeStr = '';
+                        if (msg.timestamp) {
+                            const date = msg.timestamp.toDate();
+                            timeStr = date.getHours().toString().padStart(2, '0') + ':' + date.getMinutes().toString().padStart(2, '0');
+                        }
+
+                        msgsContainer.innerHTML += `
+                        <div class="flex ${align} mb-1 w-full">
+                            <div class="max-w-[75%] p-3 rounded-2xl ${color} text-sm flex flex-col gap-1 relative">
+                                <span>${msg.text}</span>
+                                <span class="text-[9px] ${isMe ? 'text-white/70 text-right' : 'text-gray-400 text-left'}">${timeStr}</span>
+                            </div>
+                        </div>`;
+                    });
+                    msgsContainer.scrollTop = msgsContainer.scrollHeight;
+                }, error => {
+                    msgsContainer.innerHTML = '<div class="text-center text-red-500 text-xs py-4">Gagal memuat pesan.</div>';
+                });
+        }
+
+        function closeSellerChat() {
+            document.getElementById('seller-chat-overlay').classList.add('hidden');
+            document.getElementById('seller-chat-overlay').classList.remove('flex');
+            if(sellerChatRoomUnsubscribe) sellerChatRoomUnsubscribe();
+            activeChatId = null;
+        }
+
+        async function submitSellerMessage(e) {
+            e.preventDefault();
+            const input = document.getElementById('sellerChatInput');
+            const text = input.value.trim();
+            if(!text || !activeChatId) return;
+            input.value = '';
+
+            const now = firebase.firestore.FieldValue.serverTimestamp();
+
+            try {
+                // DETEKSI LOGIKA: Apakah ini dikirim ke Pembeli, atau ke Customer Service?
+                if (activeChatId.endsWith('_CS')) {
+                    // Chat dari Seller ke CS (Admin)
+                    await db.collection('chats').doc(activeChatId).set({
+                        buyerId: SELLER_DATA.seller_id,
+                        buyerName: SELLER_OUTLET_NAME + " (Toko)",
+                        sellerName: "Customer Service",
+                        lastMessage: text,
+                        timestamp: now
+                    }, {merge: true});
+
+                    await db.collection('chats').doc(activeChatId).collection('messages').add({
+                        sender: 'buyer', // Seller bertindak sebagai 'buyer' agar dikenali oleh panel Admin
+                        text: text,
+                        timestamp: now
+                    });
+                } else {
+                    // Chat normal dari Seller ke Pembeli
+                    await db.collection('chats').doc(activeChatId).set({
+                        lastMessage: text,
+                        timestamp: now
+                    }, {merge: true});
+
+                    await db.collection('chats').doc(activeChatId).collection('messages').add({
+                        sender: 'seller', // Sender normal
+                        text: text,
+                        timestamp: now
+                    });
+                }
+                
+                const msgsContainer = document.getElementById('seller-chat-messages');
+                msgsContainer.scrollTop = msgsContainer.scrollHeight;
+            } catch (err) {
+                console.error("Gagal kirim pesan", err);
+                window.alert("Gagal mengirim pesan. Pastikan internet Anda stabil.");
+            }
+        }
 
         // --- PWA SETUP (MENGGUNAKAN ID UNIK SELLER) ---
         const pwaManifest = {
-            "id": "scoolshop-seller-app-v1", // ID UNIK PENJUAL
+            "id": "scoolshop-seller-app-v1", 
             "name": "SCooL Shop Seller SCool",
             "short_name": "Seller SCool",
             "start_url": window.location.pathname + "?mode=pwa",
@@ -845,7 +1166,6 @@
             navigator.serviceWorker.register(swUrl).catch(err => console.log('PWA SW err:', err));
         }
 
-        // --- SISTEM NOTIFIKASI BACKGROUND PWA ---
         function requestNotificationPermission() {
             if ('Notification' in window) {
                 if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
@@ -867,13 +1187,10 @@
             }
         }
 
-        // --- PWA INSTALLATION PROMPT (ANTI-UNINSTALL BUG) ---
         let deferredPrompt;
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
-            
-            // Kunci Optimasi: Deteksi Uninstall dan hapus Cache Status Instalasi
             if(localStorage.getItem('scoolshop_seller_pwa_status') === 'installed') {
                 localStorage.removeItem('scoolshop_seller_pwa_status');
                 localStorage.removeItem('scoolshop_seller_pwa_time');
@@ -980,25 +1297,6 @@
             });
         }
 
-        function showCustomConfirm(message, title = "Konfirmasi") {
-            return new Promise((resolve) => {
-                document.getElementById('modalHeader').innerHTML = `<i class="fas fa-question-circle"></i> <span id="modalTitle">${title}</span>`;
-                document.getElementById('modalMessage').innerText = message;
-                
-                const inputEl = document.getElementById('modalInput');
-                inputEl.classList.add('hidden'); // Sembunyikan form input karena ini hanya konfirmasi
-
-                document.getElementById('modalBtnContainer').classList.remove('hidden');
-                document.getElementById('modalBtnCancel').classList.remove('hidden');
-                document.getElementById('modalBtnConfirm').innerText = "Ya, Yakin";
-                
-                openModalAnim();
-                
-                document.getElementById('modalBtnConfirm').onclick = () => { closeModalAnim(); resolve(true); };
-                document.getElementById('modalBtnCancel').onclick = () => { closeModalAnim(); resolve(false); };
-            });
-        }
-
         function showCustomPrompt(message, defaultValue = "", title = "Input Data") {
             return new Promise((resolve) => {
                 document.getElementById('modalHeader').innerHTML = `<i class="fas fa-edit"></i> <span id="modalTitle">${title}</span>`;
@@ -1020,7 +1318,6 @@
             });
         }
 
-        // --- RUMUS JARAK DAN ONGKIR (Sama dengan Delivery) ---
         function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
             var R = 6371; 
             var dLat = deg2rad(lat2-lat1);  
@@ -1084,7 +1381,6 @@
             return isNaN(ongkir) ? localFeeOngkir : ongkir;
         }
 
-        // FUNGSI BARU: Mengambil ongkir dari DB (Agar Riwayat tidak berubah jika Admin ganti tarif)
         function getOrderOngkir(order) {
             if (order.driver_income !== undefined && order.driver_income !== null && order.driver_income !== "") {
                 return parseInt(order.driver_income);
@@ -1092,7 +1388,6 @@
             return calculateOngkirMultiStore(order); 
         }
 
-        // --- LEAFLET MAP REGISTRATION ---
         let regMap, regMarker;
 
         function initRegMap() {
@@ -1168,7 +1463,6 @@
             }
         }
 
-        // --- MAP LOGIC UNTUK EDIT PROFIL ---
         let editMap, editMarker;
 
         function initEditMap(lat, lng) {
@@ -1250,7 +1544,6 @@
             }
         }
 
-        // --- AUTHENTICATION LOGIC ---
         let SELLER_OUTLET_NAME = ""; 
         let SELLER_DATA = null; 
         let sellerOrders = []; 
@@ -1261,12 +1554,10 @@
         let totalChartQty = 0;
         let totalChartIncome = 0;
 
-        let APP_CATEGORIES = []; // Menyimpan kategori dari database admin
+        let APP_CATEGORIES = []; 
 
-        // GANTI DENGAN URL GOOGLE APPS SCRIPT WEB APP ANDA
         const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxHO1Ll-BNgWPx0vOfpgS6TWwhCIRXNPk73mUn4EuQs1byElTytzZ0PS22V7ZXOWRlI/exec";
 
-        // --- VARIABEL BIAYA & SISTEM ---
         let ALL_SELLERS = []; 
         let localFeeOngkir = 2000; 
         let localFeeLayanan = 1000; 
@@ -1304,10 +1595,8 @@
                 const res = await fetch(`${GAS_WEB_APP_URL}?action=getData&type=app_categories`);
                 const json = await res.json();
                 if (json.status === 'success' && json.data && json.data.length > 0) {
-                    // Hanya ambil kategori yang tidak di-nonaktifkan admin
                     APP_CATEGORIES = json.data.filter(c => c.status !== 'Nonaktif');
                 } else {
-                    // Fallback default jika tabel belum ada / error
                     APP_CATEGORIES = [
                         {displayName: "Makanan Berat", sheetName: "makanan_berat"},
                         {displayName: "Minuman", sheetName: "minuman"},
@@ -1332,7 +1621,7 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             fetchSystemSettings();
-            fetchAppCategories(); // Panggil fungsi sinkronisasi kategori saat dimuat
+            fetchAppCategories(); 
 
             const now = new Date();
             const currentMonth = (now.getMonth() + 1).toString().padStart(2, '0');
@@ -1368,6 +1657,9 @@
                     loadSellerProducts();
                     loadSellerOrders();
                     loadProfileData();
+
+                    // Load daftar chat saat aplikasi dibuka
+                    loadSellerChats();
 
                     startBackgroundSync();
                     
@@ -1479,6 +1771,7 @@
                     loadSellerProducts();
                     loadSellerOrders();
                     loadProfileData();
+                    loadSellerChats();
 
                     startBackgroundSync();
 
@@ -1539,6 +1832,8 @@
                         loadSellerProducts();
                         loadSellerOrders();
                         loadProfileData();
+                        loadSellerChats();
+
                         startBackgroundSync();
                         
                         setTimeout(() => checkAndShowInstallPrompt(), 3000);
@@ -2005,7 +2300,6 @@
             `;
         }
 
-        // --- FUNGSI BARU: Konfirmasi Pembatalan ---
         async function confirmCancelOrder(orderId) {
             updateOrder(orderId, 'Dibatalkan Penjual', 'Pesanan berhasil ditolak & dibatalkan.');
         }
@@ -2066,7 +2360,7 @@
                 
                 const res = await fetch(GAS_WEB_APP_URL, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // Perbaikan anti-CORS
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({ action: 'updateOrderStatus', type: 'orders', orderId: orderId, newStatus: newStatus })
                 });
                 const result = await res.json();
@@ -2513,8 +2807,15 @@
             document.getElementById('section-orders').classList.add('hidden');
             document.getElementById('section-products').classList.add('hidden');
             document.getElementById('section-profile').classList.add('hidden');
+            document.getElementById('section-chat').classList.add('hidden');
             
             document.getElementById('section-' + tabId).classList.remove('hidden');
+
+            // Hapus Tanda Chat Baru Jika Dibuka
+            if (tabId === 'chat') {
+                localStorage.setItem('scoolshop_seller_seen_chats', globalSellerChatsHash);
+                updateChatBadge(false);
+            }
 
             document.querySelectorAll('aside a').forEach(el => {
                 el.classList.remove('menu-active', 'text-gray-600');
