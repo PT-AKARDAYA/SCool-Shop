@@ -907,14 +907,81 @@
                 let textHover = "group-hover:text-brandPrimary";
 
                 const nameLower = (cat.sheetName + " " + cat.displayName).toLowerCase();
-                if (/makan|berat|nasi|mie|food|lauk/i.test(nameLower)) { iconClass = 'fas fa-hamburger'; colorClass = "text-orange-500 bg-gradient-to-br from-white to-orange-50 border-orange-100 shadow-[0_4px_10px_rgba(249,115,22,0.15)] group-hover:shadow-[0_8px_15px_rgba(249,115,22,0.25)]"; textHover = "group-hover:text-orange-500"; }
-                else if (/minum|drink|kopi|teh|jus|boba|\bes\b/i.test(nameLower)) { iconClass = 'fas fa-mug-hot'; colorClass = "text-blue-500 bg-gradient-to-br from-white to-blue-50 border-blue-100 shadow-[0_4px_10px_rgba(59,130,246,0.15)] group-hover:shadow-[0_8px_15px_rgba(59,130,246,0.25)]"; textHover = "group-hover:text-blue-500"; }
-                else if (/jajan|snack|ringan|goreng|cemilan/i.test(nameLower)) { iconClass = 'fas fa-cookie-bite'; colorClass = "text-yellow-500 bg-gradient-to-br from-white to-yellow-50 border-yellow-100 shadow-[0_4px_10px_rgba(234,179,8,0.15)] group-hover:shadow-[0_8px_15px_rgba(234,179,8,0.25)]"; textHover = "group-hover:text-yellow-500"; }
-                else if (/dessert|manis|kue|roti|cake|puding/i.test(nameLower)) { iconClass = 'fas fa-ice-cream'; colorClass = "text-pink-500 bg-gradient-to-br from-white to-pink-50 border-pink-100 shadow-[0_4px_10px_rgba(236,72,153,0.15)] group-hover:shadow-[0_8px_15px_rgba(236,72,153,0.25)]"; textHover = "group-hover:text-pink-500"; }
-                else if (/atk|tulis|buku|sekolah|stationery/i.test(nameLower)) { iconClass = 'fas fa-pencil-ruler'; colorClass = "text-indigo-500 bg-gradient-to-br from-white to-indigo-50 border-indigo-100 shadow-[0_4px_10px_rgba(99,102,241,0.15)] group-hover:shadow-[0_8px_15px_rgba(99,102,241,0.25)]"; textHover = "group-hover:text-indigo-500"; }
-                else if (/baju|seragam|pakaian|atribut|topi|fashion|kaos|kemeja/i.test(nameLower)) { iconClass = 'fas fa-tshirt'; colorClass = "text-teal-500 bg-gradient-to-br from-white to-teal-50 border-teal-100 shadow-[0_4px_10px_rgba(20,184,166,0.15)] group-hover:shadow-[0_8px_15px_rgba(20,184,166,0.25)]"; textHover = "group-hover:text-teal-500"; }
-                else if (/aksesoris|accecoris|accessories|perkakas|alat|tools/i.test(nameLower)) { iconClass = 'fas fa-tools'; colorClass = "text-slate-600 bg-gradient-to-br from-white to-slate-50 border-slate-200 shadow-[0_4px_10px_rgba(71,85,105,0.15)] group-hover:shadow-[0_8px_15px_rgba(71,85,105,0.25)]"; textHover = "group-hover:text-slate-600"; }
-                else { iconClass = 'fas fa-th-large'; }
+                
+                // --- DETEKSI KATA KUNCI (REGEX) UNTUK IKON & WARNA OTOMATIS ---
+                if (/makan|berat|nasi|mie|food|lauk|ayam|daging|ikan/i.test(nameLower)) { 
+                    iconClass = 'fas fa-hamburger'; 
+                    colorClass = "text-orange-500 bg-gradient-to-br from-white to-orange-50 border-orange-100 shadow-[0_4px_10px_rgba(249,115,22,0.15)] group-hover:shadow-[0_8px_15px_rgba(249,115,22,0.25)]"; 
+                    textHover = "group-hover:text-orange-500"; 
+                }
+                else if (/minum|drink|kopi|teh|jus|boba|\bes\b|cair|segar/i.test(nameLower)) { 
+                    iconClass = 'fas fa-mug-hot'; 
+                    colorClass = "text-blue-500 bg-gradient-to-br from-white to-blue-50 border-blue-100 shadow-[0_4px_10px_rgba(59,130,246,0.15)] group-hover:shadow-[0_8px_15px_rgba(59,130,246,0.25)]"; 
+                    textHover = "group-hover:text-blue-500"; 
+                }
+                else if (/jajan|snack|ringan|goreng|cemilan|krupuk|kripik|keripik/i.test(nameLower)) { 
+                    iconClass = 'fas fa-cookie-bite'; 
+                    colorClass = "text-yellow-500 bg-gradient-to-br from-white to-yellow-50 border-yellow-100 shadow-[0_4px_10px_rgba(234,179,8,0.15)] group-hover:shadow-[0_8px_15px_rgba(234,179,8,0.25)]"; 
+                    textHover = "group-hover:text-yellow-500"; 
+                }
+                else if (/dessert|manis|kue|roti|cake|puding|coklat|cokelat/i.test(nameLower)) { 
+                    iconClass = 'fas fa-ice-cream'; 
+                    colorClass = "text-pink-500 bg-gradient-to-br from-white to-pink-50 border-pink-100 shadow-[0_4px_10px_rgba(236,72,153,0.15)] group-hover:shadow-[0_8px_15px_rgba(236,72,153,0.25)]"; 
+                    textHover = "group-hover:text-pink-500"; 
+                }
+                else if (/atk|tulis|buku|sekolah|stationery|pensil|bolpoin/i.test(nameLower)) { 
+                    iconClass = 'fas fa-pencil-ruler'; 
+                    colorClass = "text-indigo-500 bg-gradient-to-br from-white to-indigo-50 border-indigo-100 shadow-[0_4px_10px_rgba(99,102,241,0.15)] group-hover:shadow-[0_8px_15px_rgba(99,102,241,0.25)]"; 
+                    textHover = "group-hover:text-indigo-500"; 
+                }
+                else if (/baju|seragam|pakaian|atribut|topi|fashion|kaos|kemeja|celana|rok/i.test(nameLower)) { 
+                    iconClass = 'fas fa-tshirt'; 
+                    colorClass = "text-teal-500 bg-gradient-to-br from-white to-teal-50 border-teal-100 shadow-[0_4px_10px_rgba(20,184,166,0.15)] group-hover:shadow-[0_8px_15px_rgba(20,184,166,0.25)]"; 
+                    textHover = "group-hover:text-teal-500"; 
+                }
+                else if (/sepatu|kaos kaki|alas kaki/i.test(nameLower)) { 
+                    iconClass = 'fas fa-shoe-prints'; 
+                    colorClass = "text-stone-500 bg-gradient-to-br from-white to-stone-50 border-stone-200 shadow-[0_4px_10px_rgba(120,113,108,0.15)] group-hover:shadow-[0_8px_15px_rgba(120,113,108,0.25)]"; 
+                    textHover = "group-hover:text-stone-500"; 
+                }
+                else if (/aksesoris|accecoris|accessories|perhiasan|jam|gelang/i.test(nameLower)) { 
+                    iconClass = 'fas fa-gem'; 
+                    colorClass = "text-rose-500 bg-gradient-to-br from-white to-rose-50 border-rose-200 shadow-[0_4px_10px_rgba(244,63,94,0.15)] group-hover:shadow-[0_8px_15px_rgba(244,63,94,0.25)]"; 
+                    textHover = "group-hover:text-rose-500"; 
+                }
+                else if (/perkakas|alat|tools/i.test(nameLower)) { 
+                    iconClass = 'fas fa-tools'; 
+                    colorClass = "text-slate-600 bg-gradient-to-br from-white to-slate-50 border-slate-200 shadow-[0_4px_10px_rgba(71,85,105,0.15)] group-hover:shadow-[0_8px_15px_rgba(71,85,105,0.25)]"; 
+                    textHover = "group-hover:text-slate-600"; 
+                }
+                else if (/elektronik|komputer|gadget|hp|handphone|laptop|kabel/i.test(nameLower)) { 
+                    iconClass = 'fas fa-laptop'; 
+                    colorClass = "text-cyan-500 bg-gradient-to-br from-white to-cyan-50 border-cyan-100 shadow-[0_4px_10px_rgba(6,182,212,0.15)] group-hover:shadow-[0_8px_15px_rgba(6,182,212,0.25)]"; 
+                    textHover = "group-hover:text-cyan-500"; 
+                }
+                else if (/otomotif|motor|mobil|sparepart|kendaraan|helm|ban/i.test(nameLower)) { 
+                    iconClass = 'fas fa-car'; 
+                    colorClass = "text-gray-600 bg-gradient-to-br from-white to-gray-50 border-gray-200 shadow-[0_4px_10px_rgba(75,85,99,0.15)] group-hover:shadow-[0_8px_15px_rgba(75,85,99,0.25)]"; 
+                    textHover = "group-hover:text-gray-600"; 
+                }
+                else if (/kecantikan|kosmetik|skincare|makeup|parfum|sabun|shampo|salon/i.test(nameLower)) { 
+                    iconClass = 'fas fa-wand-magic-sparkles'; 
+                    colorClass = "text-fuchsia-500 bg-gradient-to-br from-white to-fuchsia-50 border-fuchsia-100 shadow-[0_4px_10px_rgba(217,70,239,0.15)] group-hover:shadow-[0_8px_15px_rgba(217,70,239,0.25)]"; 
+                    textHover = "group-hover:text-fuchsia-500"; 
+                }
+                else if (/buah|sayur|segar|fresh/i.test(nameLower)) { 
+                    iconClass = 'fas fa-apple-alt'; 
+                    colorClass = "text-lime-500 bg-gradient-to-br from-white to-lime-50 border-lime-200 shadow-[0_4px_10px_rgba(132,204,22,0.15)] group-hover:shadow-[0_8px_15px_rgba(132,204,22,0.25)]"; 
+                    textHover = "group-hover:text-lime-500"; 
+                }
+                else if (/promo|diskon|murah|sale/i.test(nameLower)) { 
+                    iconClass = 'fas fa-percent'; 
+                    colorClass = "text-red-500 bg-gradient-to-br from-white to-red-50 border-red-200 shadow-[0_4px_10px_rgba(239,68,68,0.15)] group-hover:shadow-[0_8px_15px_rgba(239,68,68,0.25)]"; 
+                    textHover = "group-hover:text-red-500"; 
+                }
+                else { 
+                    iconClass = 'fas fa-th-large'; 
+                }
                 
                 itemsToRender.push(`
                 <div onclick="loadCategory('${cat.sheetName}', '${cat.displayName}')" class="w-[20%] md:w-auto cursor-pointer group flex flex-col items-center px-1 mb-2 md:mb-0">
