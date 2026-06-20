@@ -929,7 +929,7 @@
                     colorClass = "text-pink-500 bg-gradient-to-br from-white to-pink-50 border-pink-100 shadow-[0_4px_10px_rgba(236,72,153,0.15)] group-hover:shadow-[0_8px_15px_rgba(236,72,153,0.25)]"; 
                     textHover = "group-hover:text-pink-500"; 
                 }
-                else if (/atk|tulis|buku|sekolah|stationery|pensil|bolpoin/i.test(nameLower)) { 
+                else if (/atk|tulis|buku|sekolah|stationery|pensil|bolpoin|kertas/i.test(nameLower)) { 
                     iconClass = 'fas fa-pencil-ruler'; 
                     colorClass = "text-indigo-500 bg-gradient-to-br from-white to-indigo-50 border-indigo-100 shadow-[0_4px_10px_rgba(99,102,241,0.15)] group-hover:shadow-[0_8px_15px_rgba(99,102,241,0.25)]"; 
                     textHover = "group-hover:text-indigo-500"; 
@@ -949,11 +949,6 @@
                     colorClass = "text-rose-500 bg-gradient-to-br from-white to-rose-50 border-rose-200 shadow-[0_4px_10px_rgba(244,63,94,0.15)] group-hover:shadow-[0_8px_15px_rgba(244,63,94,0.25)]"; 
                     textHover = "group-hover:text-rose-500"; 
                 }
-                else if (/perkakas|alat|tools/i.test(nameLower)) { 
-                    iconClass = 'fas fa-tools'; 
-                    colorClass = "text-slate-600 bg-gradient-to-br from-white to-slate-50 border-slate-200 shadow-[0_4px_10px_rgba(71,85,105,0.15)] group-hover:shadow-[0_8px_15px_rgba(71,85,105,0.25)]"; 
-                    textHover = "group-hover:text-slate-600"; 
-                }
                 else if (/elektronik|komputer|gadget|hp|handphone|laptop|kabel/i.test(nameLower)) { 
                     iconClass = 'fas fa-laptop'; 
                     colorClass = "text-cyan-500 bg-gradient-to-br from-white to-cyan-50 border-cyan-100 shadow-[0_4px_10px_rgba(6,182,212,0.15)] group-hover:shadow-[0_8px_15px_rgba(6,182,212,0.25)]"; 
@@ -969,18 +964,86 @@
                     colorClass = "text-fuchsia-500 bg-gradient-to-br from-white to-fuchsia-50 border-fuchsia-100 shadow-[0_4px_10px_rgba(217,70,239,0.15)] group-hover:shadow-[0_8px_15px_rgba(217,70,239,0.25)]"; 
                     textHover = "group-hover:text-fuchsia-500"; 
                 }
-                else if (/buah|sayur|segar|fresh/i.test(nameLower)) { 
+                else if (/buah|sayur|fresh|pertanian|tanaman/i.test(nameLower)) { 
                     iconClass = 'fas fa-apple-alt'; 
                     colorClass = "text-lime-500 bg-gradient-to-br from-white to-lime-50 border-lime-200 shadow-[0_4px_10px_rgba(132,204,22,0.15)] group-hover:shadow-[0_8px_15px_rgba(132,204,22,0.25)]"; 
                     textHover = "group-hover:text-lime-500"; 
                 }
-                else if (/promo|diskon|murah|sale/i.test(nameLower)) { 
+                else if (/sembako|kebutuhan|dapur|bumbu|minyak|beras|gula|telur|sembilan/i.test(nameLower)) {
+                    iconClass = 'fas fa-shopping-basket';
+                    colorClass = "text-amber-600 bg-gradient-to-br from-white to-amber-50 border-amber-200 shadow-[0_4px_10px_rgba(217,119,6,0.15)] group-hover:shadow-[0_8px_15px_rgba(217,119,6,0.25)]";
+                    textHover = "group-hover:text-amber-600";
+                }
+                else if (/kesehatan|obat|apotek|medis|vitamin|masker|p3k|klinik|jamu/i.test(nameLower)) {
+                    iconClass = 'fas fa-pills';
+                    colorClass = "text-emerald-500 bg-gradient-to-br from-white to-emerald-50 border-emerald-100 shadow-[0_4px_10px_rgba(16,185,129,0.15)] group-hover:shadow-[0_8px_15px_rgba(16,185,129,0.25)]";
+                    textHover = "group-hover:text-emerald-500";
+                }
+                else if (/hobi|mainan|olahraga|sport|bola|sepeda|renang|musik|gitar|game|koleksi/i.test(nameLower)) {
+                    iconClass = 'fas fa-gamepad';
+                    colorClass = "text-violet-500 bg-gradient-to-br from-white to-violet-50 border-violet-100 shadow-[0_4px_10px_rgba(139,92,246,0.15)] group-hover:shadow-[0_8px_15px_rgba(139,92,246,0.25)]";
+                    textHover = "group-hover:text-violet-500";
+                }
+                else if (/perabot|rumah|taman|mebel|kursi|meja|kasur|lemari|sapu|pel|bangunan|material|besi|kayu/i.test(nameLower)) {
+                    iconClass = 'fas fa-couch';
+                    colorClass = "text-amber-800 bg-gradient-to-br from-white to-amber-100 border-amber-200 shadow-[0_4px_10px_rgba(146,64,14,0.15)] group-hover:shadow-[0_8px_15px_rgba(146,64,14,0.25)]";
+                    textHover = "group-hover:text-amber-800";
+                }
+                else if (/jasa|servis|layanan|perbaikan|cucian|laundry|sewa/i.test(nameLower)) {
+                    iconClass = 'fas fa-hand-holding-heart';
+                    colorClass = "text-indigo-400 bg-gradient-to-br from-white to-indigo-50 border-indigo-100 shadow-[0_4px_10px_rgba(129,140,248,0.15)] group-hover:shadow-[0_8px_15px_rgba(129,140,248,0.25)]";
+                    textHover = "group-hover:text-indigo-400";
+                }
+                else if (/hewan|peliharaan|pet|kucing|anjing|burung|pakan|aquarium/i.test(nameLower)) {
+                    iconClass = 'fas fa-paw';
+                    colorClass = "text-orange-800 bg-gradient-to-br from-white to-orange-100 border-orange-200 shadow-[0_4px_10px_rgba(154,52,18,0.15)] group-hover:shadow-[0_8px_15px_rgba(154,52,18,0.25)]";
+                    textHover = "group-hover:text-orange-800";
+                }
+                else if (/tas|dompet|bag|ransel|koper/i.test(nameLower)) {
+                    iconClass = 'fas fa-briefcase';
+                    colorClass = "text-rose-400 bg-gradient-to-br from-white to-rose-50 border-rose-100 shadow-[0_4px_10px_rgba(251,113,133,0.15)] group-hover:shadow-[0_8px_15px_rgba(251,113,133,0.25)]";
+                    textHover = "group-hover:text-rose-400";
+                }
+                else if (/bayi|anak|balita|susu|popok|pampers/i.test(nameLower)) {
+                    iconClass = 'fas fa-baby';
+                    colorClass = "text-sky-400 bg-gradient-to-br from-white to-sky-50 border-sky-100 shadow-[0_4px_10px_rgba(56,189,248,0.15)] group-hover:shadow-[0_8px_15px_rgba(56,189,248,0.25)]";
+                    textHover = "group-hover:text-sky-400";
+                }
+                else if (/promo|diskon|murah|sale|voucher|pulsa|paket/i.test(nameLower)) { 
                     iconClass = 'fas fa-percent'; 
                     colorClass = "text-red-500 bg-gradient-to-br from-white to-red-50 border-red-200 shadow-[0_4px_10px_rgba(239,68,68,0.15)] group-hover:shadow-[0_8px_15px_rgba(239,68,68,0.25)]"; 
                     textHover = "group-hover:text-red-500"; 
                 }
                 else { 
-                    iconClass = 'fas fa-th-large'; 
+                    // GENERATOR OTOMATIS (FALLBACK HASH) JIKA KATA TIDAK DIKENAL SAMA SEKALI
+                    const fallbackIcons = ['fas fa-star', 'fas fa-heart', 'fas fa-crown', 'fas fa-fire', 'fas fa-gem', 'fas fa-gift', 'fas fa-box-open', 'fas fa-layer-group', 'fas fa-shapes', 'fas fa-shopping-cart'];
+                    const fallbackColors = [
+                        "text-red-500 bg-gradient-to-br from-white to-red-50 border-red-100 shadow-[0_4px_10px_rgba(239,68,68,0.15)] group-hover:shadow-[0_8px_15px_rgba(239,68,68,0.25)]",
+                        "text-orange-500 bg-gradient-to-br from-white to-orange-50 border-orange-100 shadow-[0_4px_10px_rgba(249,115,22,0.15)] group-hover:shadow-[0_8px_15px_rgba(249,115,22,0.25)]",
+                        "text-amber-500 bg-gradient-to-br from-white to-amber-50 border-amber-100 shadow-[0_4px_10px_rgba(245,158,11,0.15)] group-hover:shadow-[0_8px_15px_rgba(245,158,11,0.25)]",
+                        "text-emerald-500 bg-gradient-to-br from-white to-emerald-50 border-emerald-100 shadow-[0_4px_10px_rgba(16,185,129,0.15)] group-hover:shadow-[0_8px_15px_rgba(16,185,129,0.25)]",
+                        "text-cyan-500 bg-gradient-to-br from-white to-cyan-50 border-cyan-100 shadow-[0_4px_10px_rgba(6,182,212,0.15)] group-hover:shadow-[0_8px_15px_rgba(6,182,212,0.25)]",
+                        "text-blue-500 bg-gradient-to-br from-white to-blue-50 border-blue-100 shadow-[0_4px_10px_rgba(59,130,246,0.15)] group-hover:shadow-[0_8px_15px_rgba(59,130,246,0.25)]",
+                        "text-indigo-500 bg-gradient-to-br from-white to-indigo-50 border-indigo-100 shadow-[0_4px_10px_rgba(99,102,241,0.15)] group-hover:shadow-[0_8px_15px_rgba(99,102,241,0.25)]",
+                        "text-violet-500 bg-gradient-to-br from-white to-violet-50 border-violet-100 shadow-[0_4px_10px_rgba(139,92,246,0.15)] group-hover:shadow-[0_8px_15px_rgba(139,92,246,0.25)]",
+                        "text-fuchsia-500 bg-gradient-to-br from-white to-fuchsia-50 border-fuchsia-100 shadow-[0_4px_10px_rgba(217,70,239,0.15)] group-hover:shadow-[0_8px_15px_rgba(217,70,239,0.25)]",
+                        "text-rose-500 bg-gradient-to-br from-white to-rose-50 border-rose-100 shadow-[0_4px_10px_rgba(244,63,94,0.15)] group-hover:shadow-[0_8px_15px_rgba(244,63,94,0.25)]"
+                    ];
+                    const fallbackTextHovers = [
+                        "group-hover:text-red-500", "group-hover:text-orange-500", "group-hover:text-amber-500", "group-hover:text-emerald-500", "group-hover:text-cyan-500",
+                        "group-hover:text-blue-500", "group-hover:text-indigo-500", "group-hover:text-violet-500", "group-hover:text-fuchsia-500", "group-hover:text-rose-500"
+                    ];
+
+                    // Menggunakan jumlah dan urutan huruf (ASCII) pada nama kategori untuk mengunci warna secara konsisten
+                    let hashValue = 0;
+                    for (let i = 0; i < nameLower.length; i++) {
+                        hashValue = nameLower.charCodeAt(i) + ((hashValue << 5) - hashValue);
+                    }
+                    hashValue = Math.abs(hashValue);
+                    
+                    iconClass = fallbackIcons[hashValue % fallbackIcons.length];
+                    colorClass = fallbackColors[hashValue % fallbackColors.length];
+                    textHover = fallbackTextHovers[hashValue % fallbackTextHovers.length];
                 }
                 
                 itemsToRender.push(`
